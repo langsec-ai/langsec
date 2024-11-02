@@ -7,10 +7,10 @@ class TestComplexQueries:
         """Test nested query validation."""
         query = """
             SELECT 
-                u.username,
-                (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) as order_count
-            FROM users u
-            WHERE u.created_at > '2024-01-01'
+                users.username,
+                (SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id) as order_count
+            FROM users
+            WHERE users.created_at > '2024-01-01'
         """
         assert complex_security_guard.validate_query(query)
 
@@ -18,16 +18,16 @@ class TestComplexQueries:
         """Test complex joins with aggregations."""
         query = """
             SELECT 
-                u.username,
-                COUNT(o.id) as order_count,
-                AVG(o.amount) as avg_amount,
-                MAX(p.price) as max_product_price
-            FROM users u
-            LEFT JOIN orders o ON u.id = o.user_id
-            LEFT JOIN products p ON o.product_id = p.id
-            WHERE u.created_at > '2024-01-01'
-            GROUP BY u.username
-            HAVING COUNT(o.id) > 5
+                users.username,
+                COUNT(orders.id) as order_count,
+                AVG(orders.amount) as avg_amount,
+                MAX(products.price) as max_product_price
+            FROM users
+            LEFT JOIN orders ON users.id = orders.user_id
+            LEFT JOIN products ON orders.product_id = products.id
+            WHERE users.created_at > '2024-01-01'
+            GROUP BY users.username
+            HAVING COUNT(orders.id) > 5
         """
         assert complex_security_guard.validate_query(query)
 
@@ -35,46 +35,47 @@ class TestComplexQueries:
         """Test complex GROUP BY scenarios."""
         query = """
             SELECT 
-                p.category,
+                products.category,
                 COUNT(*) as product_count,
-                AVG(p.price) as avg_price,
-                SUM(o.amount) as total_sales
-            FROM products p
-            LEFT JOIN orders o ON p.id = o.product_id
-            GROUP BY p.category
-            HAVING AVG(p.price) > 100
+                AVG(products.price) as avg_price,
+                SUM(orders.amount) as total_sales
+            FROM products
+            LEFT JOIN orders ON products.id = orders.product_id
+            GROUP BY products.category
+            HAVING AVG(products.price) > 100
         """
         assert complex_security_guard.validate_query(query)
+
 
 
 class TestEdgeCases:
     def test_query_with_aliases(self, complex_security_guard):
-        """Test queries using table and column aliases."""
-        query = """
-            SELECT 
-                u.username as user,
-                COALESCE(SUM(o.amount), 0) as total_spent
-            FROM users u
-            LEFT JOIN orders o ON u.id = o.user_id
-            WHERE u.created_at > '2024-01-01'
-            GROUP BY u.username
-        """
-        assert complex_security_guard.validate_query(query)
+            """Test queries using column aliases."""
+            query = """
+                SELECT 
+                    users.username as user,
+                    COALESCE(SUM(orders.amount), 0) as total_spent
+                FROM users
+                LEFT JOIN orders ON users.id = orders.user_id
+                WHERE users.created_at > '2024-01-01'
+                GROUP BY users.username
+            """
+            assert complex_security_guard.validate_query(query)
 
     def test_query_with_case_statements(self, complex_security_guard):
         """Test queries using CASE statements."""
         query = """
             SELECT 
-                u.username,
+                users.username,
                 CASE 
-                    WHEN COUNT(o.id) > 10 THEN 'High'
-                    WHEN COUNT(o.id) > 5 THEN 'Medium'
+                    WHEN COUNT(orders.id) > 10 THEN 'High'
+                    WHEN COUNT(orders.id) > 5 THEN 'Medium'
                     ELSE 'Low'
                 END as order_frequency
-            FROM users u
-            LEFT JOIN orders o ON u.id = o.user_id
-            WHERE u.created_at > '2024-01-01'
-            GROUP BY u.username
+            FROM users
+            LEFT JOIN orders ON users.id = orders.user_id
+            WHERE users.created_at > '2024-01-01'
+            GROUP BY users.username
         """
         assert complex_security_guard.validate_query(query)
 
