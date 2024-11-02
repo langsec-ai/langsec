@@ -10,6 +10,9 @@ setup(
         "pydantic>=2.0.0",
         "typing-extensions>=4.0.0",
     ],
+    tests_require=[
+        "pytest>=7.0.0",
+    ],
     extras_require={
         "dev": [
             "pytest>=7.0.0",
@@ -19,12 +22,12 @@ setup(
         ]
     },
     python_requires=">=3.8",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Amit Schendel & Arbel Israeli",
+    author_email="dev@lang-sec.com",
     description="Security framework for LLM-generated SQL queries",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/langsec",
+    url="https://github.com/langsec-ai/langsec",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -34,5 +37,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 )

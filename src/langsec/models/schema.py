@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Set, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from .enums import AggregationType, ColumnAccess, JoinType, TimeWindow
 
@@ -30,6 +30,20 @@ class TableSchema(BaseModel):
     allow_group_by: bool = True
     allowed_group_by_columns: Set[str] = Field(default_factory=set)
 
+    class Config:
+        validate_assignment = True
+        arbitrary_types_allowed = True
+
+    @validator('allowed_joins', pre=True)
+    def ensure_join_rules(cls, v):
+        """Ensures join rules are properly instantiated."""
+        if isinstance(v, dict):
+            return {
+                k: v[k] if isinstance(v[k], JoinRule) else JoinRule(**v[k])
+                for k in v
+            }
+        return v
+
 class SecuritySchema(BaseModel):
     tables: Dict[str, TableSchema] = Field(default_factory=dict)
     max_joins: int = 3
@@ -43,3 +57,17 @@ class SecuritySchema(BaseModel):
             "EXECUTE", "EXEC", "SYSADMIN", "DBADMIN"
         }
     )
+
+    class Config:
+        validate_assignment = True
+        arbitrary_types_allowed = True
+
+    @validator('tables', pre=True)
+    def ensure_table_schemas(cls, v):
+        """Ensures table schemas are properly instantiated."""
+        if isinstance(v, dict):
+            return {
+                k: v[k] if isinstance(v[k], TableSchema) else TableSchema(**v[k])
+                for k in v
+            }
+        return v

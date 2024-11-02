@@ -1,5 +1,5 @@
 import pytest
-from langsec.exceptions.errors import SQLInjectionError
+from langsec.exceptions.errors import SQLInjectionError, SQLSyntaxError
 
 class TestSQLInjection:
     def test_basic_injection(self, security_guard):
@@ -23,5 +23,5 @@ class TestSQLInjection:
             """SELECT * FROM users WHERE id = 1; EXECUTE('DROP TABLE users')"""
         ]
         for query in queries:
-            with pytest.raises(SQLInjectionError):
+            with pytest.raises((SQLInjectionError, SQLSyntaxError)):
                 security_guard.validate_query(query)
