@@ -47,7 +47,7 @@ class SQLSecurityGuard:
             self.syntax_validator.validate(query)
 
             # Only validate injection if we have forbidden keywords
-            if self.schema.forbidden_keywords:
+            if self.schema.sql_injection_protection:
                 self.injection_validator.validate(query)
 
             # Validate against schema if provided

@@ -11,6 +11,7 @@ from .join import JoinValidator
 from .aggregation import AggregationValidator
 from .group_by import GroupByValidator
 from .where import WhereValidator
+from .subquery import SubqueryValidator
 
 
 class QueryValidator:
@@ -29,6 +30,7 @@ class QueryValidator:
         self.where_validator = WhereValidator(schema)
         self.aggregation_validator = AggregationValidator(schema)
         self.group_by_validator = GroupByValidator(schema)
+        self.subqueries_validator = SubqueryValidator(schema)
 
     def validate(self, query: str) -> bool:
         """Validates a query against all configured rules."""
@@ -47,6 +49,7 @@ class QueryValidator:
         self.where_validator.validate(parsed)
         self.aggregation_validator.validate(parsed)
         self.group_by_validator.validate(parsed)
+        self.subqueries_validator.validate(parsed)
 
         return True
 

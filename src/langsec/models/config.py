@@ -8,6 +8,4 @@ class LangSecConfig(BaseModel):
     log_queries: bool = False
     log_path: Optional[str] = None
     raise_on_violation: bool = True
-    allow_explain: bool = False
-    dry_run_mode: bool = False
-    strict_validation: bool = False
+    dry_run_mode: bool = False # TODO: implement.

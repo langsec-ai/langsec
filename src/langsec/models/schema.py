@@ -1,7 +1,7 @@
-from typing import Dict, List, Optional, Set, Union
-from pydantic import BaseModel, Field, validator
+from typing import Dict, Optional, Set
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from .enums import AggregationType, ColumnAccess, JoinType, TimeWindow
+from .enums import AggregationType, ColumnAccess, JoinType
 
 
 class ColumnRule(BaseModel):
@@ -9,37 +9,31 @@ class ColumnRule(BaseModel):
     max_rows: Optional[int] = None
     allowed_operations: Optional[Set[str]] = Field(default_factory=set)
     allowed_aggregations: Optional[Set[AggregationType]] = Field(default_factory=set)
-    sensitive_data: bool = False
-    mask_pattern: Optional[str] = None
-    validation_regex: Optional[str] = None
-    min_value: Optional[Union[int, float]] = None
-    max_value: Optional[Union[int, float]] = None
+    
+    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
 
 class JoinRule(BaseModel):
     allowed_types: Set[JoinType] = Field(
         default_factory=lambda: {JoinType.INNER, JoinType.LEFT}
     )
-    conditions: List[str] = Field(default_factory=list)
-    max_rows_after_join: Optional[int] = None
+    
+    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
 
 class TableSchema(BaseModel):
     columns: Dict[str, ColumnRule] = Field(default_factory=dict)
-    max_rows: Optional[int] = None
+    max_rows: Optional[int] = None  # TODO: implement.
     allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
     require_where_clause: bool = False
     allowed_where_columns: Set[str] = Field(default_factory=set)
-    time_window_restriction: Optional[TimeWindow] = None
-    time_column: Optional[str] = None
     allow_group_by: bool = True
     allowed_group_by_columns: Set[str] = Field(default_factory=set)
 
-    class Config:
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
-    @validator("allowed_joins", pre=True)
+    @field_validator("allowed_joins", mode="before")
+    @classmethod
     def ensure_join_rules(cls, v):
         """Ensures join rules are properly instantiated."""
         if isinstance(v, dict):
@@ -56,6 +50,7 @@ class SecuritySchema(BaseModel):
     allow_unions: bool = False
     allow_temp_tables: bool = False
     max_query_length: Optional[int] = None
+    sql_injection_protection: bool = True
     forbidden_keywords: Set[str] = Field(
         default_factory=lambda: {
             "TRUNCATE",
@@ -70,11 +65,10 @@ class SecuritySchema(BaseModel):
         }
     )
 
-    class Config:
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
-    @validator("tables", pre=True)
+    @field_validator("tables", mode="before")
+    @classmethod
     def ensure_table_schemas(cls, v):
         """Ensures table schemas are properly instantiated."""
         if isinstance(v, dict):
