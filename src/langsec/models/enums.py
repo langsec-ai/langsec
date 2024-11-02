@@ -1,9 +1,11 @@
 from enum import Enum
 
+
 class ColumnAccess(str, Enum):
     READ = "read"
     WRITE = "write"
     DENIED = "denied"
+
 
 class AggregationType(str, Enum):
     COUNT = "count"
@@ -12,11 +14,13 @@ class AggregationType(str, Enum):
     MIN = "min"
     MAX = "max"
 
+
 class JoinType(str, Enum):
     INNER = "inner"
     LEFT = "left"
     RIGHT = "right"
     FULL = "full"
+
 
 class TimeWindow(str, Enum):
     MINUTE = "minute"

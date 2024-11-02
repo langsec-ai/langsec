@@ -3,8 +3,9 @@ from langsec.exceptions.errors import (
     TableAccessError,
     ColumnAccessError,
     JoinViolationError,
-    QueryComplexityError
+    QueryComplexityError,
 )
+
 
 class TestBasicQueries:
     def test_simple_select(self, security_guard):
@@ -30,6 +31,7 @@ class TestBasicQueries:
         with pytest.raises(TableAccessError):
             security_guard.validate_query(query)
 
+
 class TestJoins:
     def test_valid_joins(self, security_guard):
         """Test that valid joins are allowed."""
@@ -41,7 +43,7 @@ class TestJoins:
             WHERE users.created_at > '2024-01-01'
         """
         security_guard.validate_query(query1)  # Should not raise
-        
+
         # Test LEFT JOIN
         query2 = """
             SELECT users.username, orders.amount
@@ -50,7 +52,7 @@ class TestJoins:
             WHERE users.created_at > '2024-01-01'
         """
         security_guard.validate_query(query2)  # Should not raise
-        
+
         # Test INNER JOIN
         query3 = """
             SELECT users.username, orders.amount
@@ -94,6 +96,7 @@ class TestJoins:
         """
         with pytest.raises(JoinViolationError):
             security_guard.validate_query(query)
+
 
 class TestAggregations:
     def test_allowed_aggregation(self, security_guard):

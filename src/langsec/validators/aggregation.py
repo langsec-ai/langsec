@@ -3,6 +3,7 @@ from .base import BaseQueryValidator
 from ..models.enums import AggregationType
 from ..exceptions.errors import QueryComplexityError
 
+
 class AggregationValidator(BaseQueryValidator):
     def validate(self, parsed: exp.Expression) -> None:
         """Validates aggregation functions against schema rules."""
@@ -11,11 +12,11 @@ class AggregationValidator(BaseQueryValidator):
                 table_name = column.table or self._get_default_table(agg, column)
                 if not table_name:
                     continue
-                    
+
                 table_schema = self.schema.tables.get(table_name)
                 if not table_schema or not table_schema.columns:
                     continue
-                    
+
                 column_rule = table_schema.columns.get(column.name)
                 if column_rule and column_rule.allowed_aggregations:
                     agg_type = self._get_aggregation_type(agg)
@@ -31,6 +32,6 @@ class AggregationValidator(BaseQueryValidator):
             exp.Avg: AggregationType.AVG,
             exp.Min: AggregationType.MIN,
             exp.Max: AggregationType.MAX,
-            exp.Count: AggregationType.COUNT
+            exp.Count: AggregationType.COUNT,
         }
-        return agg_map.get(type(agg)) # type: ignore
+        return agg_map.get(type(agg))  # type: ignore

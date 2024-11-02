@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, validator
 
 from .enums import AggregationType, ColumnAccess, JoinType, TimeWindow
 
+
 class ColumnRule(BaseModel):
     access: Optional[ColumnAccess] = None
     max_rows: Optional[int] = None
@@ -14,10 +15,14 @@ class ColumnRule(BaseModel):
     min_value: Optional[Union[int, float]] = None
     max_value: Optional[Union[int, float]] = None
 
+
 class JoinRule(BaseModel):
-    allowed_types: Set[JoinType] = Field(default_factory=lambda: {JoinType.INNER, JoinType.LEFT})
+    allowed_types: Set[JoinType] = Field(
+        default_factory=lambda: {JoinType.INNER, JoinType.LEFT}
+    )
     conditions: List[str] = Field(default_factory=list)
     max_rows_after_join: Optional[int] = None
+
 
 class TableSchema(BaseModel):
     columns: Dict[str, ColumnRule] = Field(default_factory=dict)
@@ -34,15 +39,15 @@ class TableSchema(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
 
-    @validator('allowed_joins', pre=True)
+    @validator("allowed_joins", pre=True)
     def ensure_join_rules(cls, v):
         """Ensures join rules are properly instantiated."""
         if isinstance(v, dict):
             return {
-                k: v[k] if isinstance(v[k], JoinRule) else JoinRule(**v[k])
-                for k in v
+                k: v[k] if isinstance(v[k], JoinRule) else JoinRule(**v[k]) for k in v
             }
         return v
+
 
 class SecuritySchema(BaseModel):
     tables: Dict[str, TableSchema] = Field(default_factory=dict)
@@ -53,8 +58,15 @@ class SecuritySchema(BaseModel):
     max_query_length: Optional[int] = None
     forbidden_keywords: Set[str] = Field(
         default_factory=lambda: {
-            "TRUNCATE", "DROP", "ALTER", "GRANT", "REVOKE",
-            "EXECUTE", "EXEC", "SYSADMIN", "DBADMIN"
+            "TRUNCATE",
+            "DROP",
+            "ALTER",
+            "GRANT",
+            "REVOKE",
+            "EXECUTE",
+            "EXEC",
+            "SYSADMIN",
+            "DBADMIN",
         }
     )
 
@@ -62,7 +74,7 @@ class SecuritySchema(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
 
-    @validator('tables', pre=True)
+    @validator("tables", pre=True)
     def ensure_table_schemas(cls, v):
         """Ensures table schemas are properly instantiated."""
         if isinstance(v, dict):

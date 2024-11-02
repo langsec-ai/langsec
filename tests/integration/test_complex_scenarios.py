@@ -1,6 +1,7 @@
 import pytest
 from langsec.exceptions.errors import QueryComplexityError, ColumnAccessError
 
+
 class TestComplexQueries:
     def test_nested_queries(self, complex_security_guard):
         """Test nested query validation."""
@@ -45,6 +46,7 @@ class TestComplexQueries:
         """
         assert complex_security_guard.validate_query(query)
 
+
 class TestEdgeCases:
     def test_query_with_aliases(self, complex_security_guard):
         """Test queries using table and column aliases."""
@@ -75,6 +77,7 @@ class TestEdgeCases:
             GROUP BY u.username
         """
         assert complex_security_guard.validate_query(query)
+
 
 class TestErrorScenarios:
     def test_exceed_query_length(self, complex_security_guard):

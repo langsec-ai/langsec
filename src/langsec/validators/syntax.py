@@ -1,6 +1,6 @@
-from typing import Optional
-from sqlglot import parse_one, exp
+from sqlglot import parse_one
 from ..exceptions.errors import SQLSyntaxError
+
 
 class SyntaxValidator:
     def validate(self, query: str) -> bool:
