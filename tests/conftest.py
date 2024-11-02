@@ -15,7 +15,9 @@ def basic_schema():
                     "username": ColumnRule(access=ColumnAccess.READ),
                     "email": ColumnRule(access=ColumnAccess.DENIED),
                     "created_at": ColumnRule(access=ColumnAccess.READ),
-                    "column_1": ColumnRule(access=ColumnAccess.READ),  # Added for length test
+                    "column_1": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for length test
                 },
                 max_rows=1000,
                 require_where_clause=True,
@@ -68,11 +70,19 @@ def complex_schema():
                     "user_id": ColumnRule(access=ColumnAccess.READ),
                     "amount": ColumnRule(
                         access=ColumnAccess.READ,
-                        allowed_aggregations={AggregationType.SUM, AggregationType.AVG, AggregationType.COUNT},
+                        allowed_aggregations={
+                            AggregationType.SUM,
+                            AggregationType.AVG,
+                            AggregationType.COUNT,
+                        },
                     ),
                     "product_id": ColumnRule(access=ColumnAccess.READ),
-                    "total_spent": ColumnRule(access=ColumnAccess.READ),  # Added for alias test
-                    "order_count": ColumnRule(access=ColumnAccess.READ),  # Added for subquery
+                    "total_spent": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for alias test
+                    "order_count": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for subquery
                 },
                 allowed_joins={
                     "users": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
@@ -95,10 +105,18 @@ def complex_schema():
                         access=ColumnAccess.READ,
                         allowed_aggregations={AggregationType.COUNT},
                     ),
-                    "product_count": ColumnRule(access=ColumnAccess.READ),  # Added for aggregation
-                    "avg_price": ColumnRule(access=ColumnAccess.READ),      # Added for aggregation
-                    "total_sales": ColumnRule(access=ColumnAccess.READ),    # Added for aggregation
-                    "max_product_price": ColumnRule(access=ColumnAccess.READ),  # Added for complex joins test
+                    "product_count": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for aggregation
+                    "avg_price": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for aggregation
+                    "total_sales": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for aggregation
+                    "max_product_price": ColumnRule(
+                        access=ColumnAccess.READ
+                    ),  # Added for complex joins test
                 },
                 allowed_joins={
                     "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
@@ -123,6 +141,7 @@ def complex_schema():
         },
     )
 
+
 @pytest.fixture
 def security_guard(basic_schema):
     """Provides a configured SQLSecurityGuard instance."""
@@ -133,6 +152,7 @@ def security_guard(basic_schema):
 def complex_security_guard(complex_schema):
     """Provides a SQLSecurityGuard instance with complex configuration."""
     return SQLSecurityGuard(schema=complex_schema)
+
 
 @pytest.fixture
 def security_guard_no_subqueries(basic_schema):

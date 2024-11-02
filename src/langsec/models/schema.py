@@ -9,7 +9,7 @@ class ColumnRule(BaseModel):
     max_rows: Optional[int] = None
     allowed_operations: Optional[Set[str]] = Field(default_factory=set)
     allowed_aggregations: Optional[Set[AggregationType]] = Field(default_factory=set)
-    
+
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
 
@@ -17,7 +17,7 @@ class JoinRule(BaseModel):
     allowed_types: Set[JoinType] = Field(
         default_factory=lambda: {JoinType.INNER, JoinType.LEFT}
     )
-    
+
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
 

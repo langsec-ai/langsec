@@ -6,7 +6,9 @@ from ..exceptions.errors import ColumnAccessError
 
 
 class ColumnValidator(BaseQueryValidator):
-    def _resolve_table_name(self, parsed: exp.Expression, table_alias: str) -> Optional[str]:
+    def _resolve_table_name(
+        self, parsed: exp.Expression, table_alias: str
+    ) -> Optional[str]:
         """Resolve table alias to actual table name."""
         for table in parsed.find_all(exp.Table):
             if table.alias and table.alias.lower() == table_alias.lower():
@@ -23,7 +25,7 @@ class ColumnValidator(BaseQueryValidator):
 
     def validate(self, parsed: exp.Expression) -> None:
         aliases = self._get_table_aliases(parsed)
-        
+
         for column in parsed.find_all(exp.Column):
             table_name = None
             if column.table:
@@ -31,7 +33,7 @@ class ColumnValidator(BaseQueryValidator):
                 table_name = aliases.get(column.table.lower()) or column.table.lower()
             else:
                 table_name = self._get_default_table(parsed, column)
-            
+
             if not table_name:
                 continue
 

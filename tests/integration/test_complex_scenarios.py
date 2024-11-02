@@ -47,11 +47,10 @@ class TestComplexQueries:
         assert complex_security_guard.validate_query(query)
 
 
-
 class TestEdgeCases:
     def test_query_with_aliases(self, complex_security_guard):
-            """Test queries using column aliases."""
-            query = """
+        """Test queries using column aliases."""
+        query = """
                 SELECT 
                     users.username as user,
                     COALESCE(SUM(orders.amount), 0) as total_spent
@@ -60,7 +59,7 @@ class TestEdgeCases:
                 WHERE users.created_at > '2024-01-01'
                 GROUP BY users.username
             """
-            assert complex_security_guard.validate_query(query)
+        assert complex_security_guard.validate_query(query)
 
     def test_query_with_case_statements(self, complex_security_guard):
         """Test queries using CASE statements."""

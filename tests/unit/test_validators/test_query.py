@@ -31,6 +31,7 @@ class TestBasicQueries:
         with pytest.raises(TableAccessError):
             security_guard.validate_query(query)
 
+
 class TestColumnAccess:
     def test_allowed_column(self, security_guard):
         """Test that allowed columns are allowed."""
@@ -63,7 +64,7 @@ class TestColumnAccess:
         query = "SELECT * FROM users WHERE email = 'a@a.com'"
         with pytest.raises(ColumnAccessError):
             security_guard.validate_query(query)
-    
+
     def test_column_not_in_schema(self, security_guard):
         """Test that columns not in the schema are caught."""
         query = "SELECT * FROM users WHERE foo = 'bar'"
@@ -162,6 +163,7 @@ class TestAggregations:
         with pytest.raises(QueryComplexityError):
             security_guard.validate_query(query)
 
+
 class TestAliases:
     def test_table_aliases(self, security_guard):
         """Test that queries with table aliases are validated correctly."""
@@ -231,6 +233,7 @@ class TestAliases:
         """
         with pytest.raises(ColumnAccessError):
             security_guard.validate_query(query)
+
 
 class TestSubqueries:
     def test_simple_subquery_allowed(self, complex_security_guard):
