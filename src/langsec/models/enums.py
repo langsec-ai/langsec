@@ -22,10 +22,12 @@ class JoinType(str, Enum):
     FULL = "full"
 
 
-class TimeWindow(str, Enum):
-    MINUTE = "minute"
-    HOUR = "hour"
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
-    YEAR = "year"
+class QueryType(str, Enum):
+    SELECT = "SELECT"
+    INSERT = "INSERT"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    CREATE = "CREATE"
+    DROP = "DROP"
+    ALTER = "ALTER"
+    TRUNCATE = "TRUNCATE"

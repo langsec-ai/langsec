@@ -1,6 +1,12 @@
 import pytest
 from langsec import SQLSecurityGuard
-from langsec.models.schema import SecuritySchema, TableSchema, ColumnRule, JoinRule
+from langsec.models.schema import (
+    SecuritySchema,
+    TableSchema,
+    ColumnRule,
+    JoinRule,
+    QueryType,
+)
 from langsec.models.enums import ColumnAccess, JoinType, AggregationType
 
 
@@ -158,4 +164,11 @@ def complex_security_guard(complex_schema):
 def security_guard_no_subqueries(basic_schema):
     """Create a security guard with subqueries disabled."""
     basic_schema.allow_subqueries = False
+    return SQLSecurityGuard(schema=basic_schema)
+
+
+@pytest.fixture
+def security_guard_multiple_types(basic_schema):
+    """Create a security guard that allows multiple query types."""
+    basic_schema.allowed_query_types = {QueryType.SELECT, QueryType.INSERT}
     return SQLSecurityGuard(schema=basic_schema)

@@ -12,6 +12,7 @@ from .aggregation import AggregationValidator
 from .group_by import GroupByValidator
 from .where import WhereValidator
 from .subquery import SubqueryValidator
+from .type import QueryTypeValidator
 
 
 class QueryValidator:
@@ -25,6 +26,7 @@ class QueryValidator:
 
         # Initialize all validators
         self.table_validator = TableValidator(schema)
+        self.query_type_validator = QueryTypeValidator(schema)
         self.join_validator = JoinValidator(schema)
         self.column_validator = ColumnValidator(schema)
         self.where_validator = WhereValidator(schema)
@@ -44,6 +46,7 @@ class QueryValidator:
 
         # Run all validators
         self.table_validator.validate(parsed)
+        self.query_type_validator.validate(parsed)
         self.join_validator.validate(parsed)
         self.column_validator.validate(parsed)
         self.where_validator.validate(parsed)

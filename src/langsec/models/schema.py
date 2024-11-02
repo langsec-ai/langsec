@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Set
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from .enums import AggregationType, ColumnAccess, JoinType
+from .enums import AggregationType, ColumnAccess, JoinType, QueryType
 
 
 class ColumnRule(BaseModel):
@@ -64,6 +64,11 @@ class SecuritySchema(BaseModel):
             "DBADMIN",
         }
     )
+    allowed_query_types: Set[QueryType] = Field(
+        default_factory=lambda: {
+            QueryType.SELECT
+        }  # Default to only allowing SELECT queries
+    )
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
@@ -76,4 +81,12 @@ class SecuritySchema(BaseModel):
                 k: v[k] if isinstance(v[k], TableSchema) else TableSchema(**v[k])
                 for k in v
             }
+        return v
+
+    @field_validator("allowed_query_types", mode="before")
+    @classmethod
+    def ensure_query_types(cls, v):
+        """Ensures query types are properly instantiated."""
+        if isinstance(v, set):
+            return {QueryType(qt) if isinstance(qt, str) else qt for qt in v}
         return v
