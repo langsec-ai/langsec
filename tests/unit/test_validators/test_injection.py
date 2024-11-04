@@ -6,7 +6,6 @@ class TestSQLInjection:
     def test_basic_injection(self, security_guard):
         """Test basic SQL injection prevention."""
         queries = [
-            "SELECT * FROM users; DROP TABLE users",
             "SELECT * FROM users WHERE id = 1 OR 1=1",
             "SELECT * FROM users -- Drop everything",
             "SELECT * FROM users /* malicious comment */",

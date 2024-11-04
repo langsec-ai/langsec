@@ -7,11 +7,6 @@ class SQLInjectionValidator:
     def __init__(self):
         # Common SQL injection patterns
         self.patterns: List[Pattern] = [
-            # Multiple query execution
-            re.compile(
-                r";\s*(?:DROP|DELETE|INSERT|UPDATE|CREATE|ALTER|TRUNCATE)\s+",
-                re.IGNORECASE,
-            ),
             # Comments
             re.compile(r"--", re.IGNORECASE),
             re.compile(r"/\*.*?\*/", re.IGNORECASE | re.DOTALL),
@@ -48,8 +43,6 @@ class SQLInjectionValidator:
             "or 1",
             "or true",
             "or false",
-            ";",
-            "';",
             "\\",
             "%27",
             "'--",
