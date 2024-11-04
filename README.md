@@ -1,3 +1,8 @@
+[![Version](https://img.shields.io/github/v/release/langsec-ai/langsec)](https://github.com/langsec-ai/langsec/releases)
+![License](https://img.shields.io/github/license/langsec-ai/langsec)
+[![Stars](https://img.shields.io/github/stars/langsec-ai/langsec?style=social)](https://github.com/langsec-ai/langsec/stargazers)
+
+
 # LangSec: A Security Framework for Text-to-SQL
 A security framework for validating and securing LLM-generated SQL queries. LangSec helps prevent SQL injection, unauthorized access, and other security vulnerabilities when working with language models that generate SQL.
 
