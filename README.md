@@ -90,71 +90,6 @@ schema = SecuritySchema(
 )
 ```
 
-### Column Access Control
-
-Control access to individual columns:
-
-```python
-# Column access levels
-READ = ColumnAccess.READ      # Column can be read
-WRITE = ColumnAccess.WRITE    # Column can be written (not implemented yet)
-DENIED = ColumnAccess.DENIED  # Column access is denied
-```
-
-Note: if a column is not defined in the schema, it is assumed to be `DENIED`.
-
-### Join Control
-
-Define allowed join types between tables:
-
-```python
-allowed_joins={
-    "orders": JoinRule(allowed_types={
-        JoinType.INNER, 
-        JoinType.LEFT
-    })
-}
-```
-
-### Aggregation Control
-
-Control which aggregation functions can be used on specific columns:
-
-```python
-"amount": ColumnRule(
-    access=ColumnAccess.READ,
-    allowed_aggregations={
-        AggregationType.SUM,
-        AggregationType.AVG,
-        AggregationType.COUNT
-    }
-)
-```
-
-## Error Handling
-
-LangSec provides specific exceptions for different types of violations:
-
-```python
-from langsec.exceptions.errors import (
-    ColumnAccessError,
-    TableAccessError,
-    JoinViolationError,
-    QueryComplexityError,
-)
-
-try:
-    guard.validate_query(query)
-except ColumnAccessError as e:
-    print(f"Column access violation: {e}")
-except TableAccessError as e:
-    print(f"Table access violation: {e}")
-except JoinViolationError as e:
-    print(f"Join violation: {e}")
-except QueryComplexityError as e:
-    print(f"Query too complex: {e}")
-```
-
 ## Advanced Usage
 
 ### Working with Table Aliases
@@ -175,17 +110,6 @@ Control subquery usage:
 schema = SecuritySchema(
     tables={...},
     allow_subqueries=True  # Enable/disable subqueries
-)
-```
-
-### Query Length Limits
-
-Prevent overly complex queries:
-
-```python
-schema = SecuritySchema(
-    tables={...},
-    max_query_length=500  # Maximum query length in characters
 )
 ```
 
