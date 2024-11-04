@@ -15,12 +15,6 @@ class TableValidator(BaseQueryValidator):
 
         for table in parsed.find_all(exp.Table):
             table_name = self._get_actual_table_name(table)
-            if table_name not in self.schema.tables:
+            schema_tables_lower = {t.lower() for t in self.schema.tables}
+            if table_name not in schema_tables_lower:
                 raise TableAccessError(f"Access to table '{table_name}' is not allowed")
-
-    def get_tables_from_select(self, select: exp.Select) -> Set[str]:
-        """Gets all table names referenced in a SELECT statement."""
-        tables = set()
-        for table in select.find_all(exp.Table):
-            tables.add(self._get_actual_table_name(table))
-        return tables
