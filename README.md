@@ -1,15 +1,7 @@
 # LangSec: A Security Framework for Language Models
 A security framework for validating and securing LLM-generated SQL queries. LangSec helps prevent SQL injection, unauthorized access, and other security vulnerabilities when working with language models that generate SQL.
 
-## Features
-
-- 🛡️ SQL Injection Protection
-- 🔒 Column-level Access Control
-- 🔍 Query Complexity Validation
-- 🤝 Join Validation
-- 📊 Aggregation Control
-- ⚡ High Performance
-- 🐍 Pure Python Implementation
+![LangSec](assets/image.png)
 
 ## Installation
 
