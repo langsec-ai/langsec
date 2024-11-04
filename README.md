@@ -3,7 +3,7 @@ A security framework for validating and securing LLM-generated SQL queries. Lang
 
 ![Text To SQL Abuse](assets/langsecgif.gif)
 
-Demonstration of making a malicious query using [vanna](https://github.com/vanna-ai/vanna).
+Demonstration of making a malicious query using [Vanna](https://github.com/vanna-ai/vanna).
 LangSec helps prevent such attacks by validating generated queries against a security schema.
 
 ![LangSec](assets/image.png)
