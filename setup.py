@@ -22,7 +22,7 @@ setup(
         ]
     },
     python_requires=">=3.8",
-    author="Amit Schendel & Arbel Israeli",
+    author="LangSec",
     author_email="dev@lang-sec.com",
     description="Security framework for LLM-generated SQL queries",
     long_description=open("README.md").read(),
