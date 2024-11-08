@@ -41,9 +41,6 @@ class SQLSecurityGuard:
             if self.config.log_queries:
                 self.logger.info(f"Validating query: {query}")
 
-            if self.schema.sql_injection_protection:
-                self.injection_validator.validate(query)
-
             # Validate against schema if provided
             if self.schema.tables:
                 self.query_validator.validate(query)

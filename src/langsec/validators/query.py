@@ -13,6 +13,7 @@ from .group_by import GroupByValidator
 from .where import WhereValidator
 from .subquery import SubqueryValidator
 from .type import QueryTypeValidator
+from .injection import SQLInjectionValidator
 
 
 class QueryValidator:
@@ -34,6 +35,9 @@ class QueryValidator:
         self.group_by_validator = GroupByValidator(schema)
         self.subqueries_validator = SubqueryValidator(schema)
 
+        if self.schema.sql_injection_protection:
+            self.sql_injection_validator = SQLInjectionValidator()
+
     def validate(self, query: str) -> bool:
         """Validates a query against all configured rules."""
         self._validate_query_length(query)
@@ -53,6 +57,9 @@ class QueryValidator:
         self.aggregation_validator.validate(parsed)
         self.group_by_validator.validate(parsed)
         self.subqueries_validator.validate(parsed)
+
+        if self.schema.sql_injection_protection:
+            self.sql_injection_validator.validate(parsed)
 
         return True
 
