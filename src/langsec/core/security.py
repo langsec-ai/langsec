@@ -4,7 +4,6 @@ from ..models.schema import SecuritySchema
 from ..models.config import LangSecConfig
 from ..validators.query import QueryValidator
 from ..validators.injection import SQLInjectionValidator
-from ..validators.syntax import SyntaxValidator
 
 
 class SQLSecurityGuard:
@@ -20,7 +19,6 @@ class SQLSecurityGuard:
 
         self.query_validator = QueryValidator(schema, config)
         self.injection_validator = SQLInjectionValidator()
-        self.syntax_validator = SyntaxValidator()
 
         if self.config.log_queries:
             self._setup_logging()
@@ -42,9 +40,6 @@ class SQLSecurityGuard:
         try:
             if self.config.log_queries:
                 self.logger.info(f"Validating query: {query}")
-
-            # Always validate syntax
-            self.syntax_validator.validate(query)
 
             if self.schema.sql_injection_protection:
                 self.injection_validator.validate(query)
