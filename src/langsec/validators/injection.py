@@ -1,10 +1,14 @@
-import re
-from typing import List, Pattern, Set
+from typing import List, Pattern, Set, Optional
 from ..exceptions.errors import SQLInjectionError
+from .base import BaseQueryValidator
+from ..models.schema import SecuritySchema
+import re
+from sqlglot import exp
 
 
-class SQLInjectionValidator:
-    def __init__(self):
+class SQLInjectionValidator(BaseQueryValidator):
+    def __init__(self, schema: Optional[SecuritySchema] = None):
+        super().__init__(schema)
         # Common SQL injection patterns
         self.patterns: List[Pattern] = [
             # Comments
@@ -51,10 +55,9 @@ class SQLInjectionValidator:
     def _check_suspicious_tokens(self, query: str) -> bool:
         """Check for suspicious token combinations that might indicate SQL injection."""
         normalized_query = query.lower()
-        for token in self.suspicious_tokens:
-            if token.lower() in normalized_query:
-                return True
-        return False
+        return any(
+            token.lower() in normalized_query for token in self.suspicious_tokens
+        )
 
     def _check_quote_balance(self, query: str) -> bool:
         """Check if quotes are properly balanced in the query."""
@@ -62,41 +65,69 @@ class SQLInjectionValidator:
         double_quotes = query.count('"') % 2
         return single_quotes == 0 and double_quotes == 0
 
-    def validate(self, query: str) -> bool:
+    def _check_expression_recursively(self, expr: exp.Expression) -> None:
         """
-        Validates a query for SQL injection patterns.
-        Returns True if safe, raises SQLInjectionError if potentially malicious.
-
-        Args:
-            query: The SQL query string to validate
-
-        Returns:
-            bool: True if the query is considered safe
-
-        Raises:
-            SQLInjectionError: If potential SQL injection is detected
+        Recursively check an expression and its children for SQL injection patterns.
         """
-        if not query or not isinstance(query, str):
-            raise ValueError("Query must be a non-empty string")
+        # Convert the expression to a string for pattern matching
+        expr_str = str(expr)
 
         # Check for pattern matches
         for pattern in self.patterns:
-            match = pattern.search(query)
+            match = pattern.search(expr_str)
             if match:
                 raise SQLInjectionError(
                     f"Potential SQL injection detected - matches pattern: {pattern.pattern}"
                 )
 
         # Check for suspicious tokens
-        if self._check_suspicious_tokens(query):
+        if self._check_suspicious_tokens(expr_str):
             raise SQLInjectionError(
                 "Potential SQL injection detected - contains suspicious token combination"
             )
 
-        # Check quote balance
-        if not self._check_quote_balance(query):
-            raise SQLInjectionError(
-                "Potential SQL injection detected - unbalanced quotes"
-            )
+        # Special checks for different expression types
+        if isinstance(expr, exp.Literal) and isinstance(expr.this, str):
+            # Check string literals more thoroughly
+            if not self._check_quote_balance(expr.this):
+                raise SQLInjectionError(
+                    "Potential SQL injection detected - unbalanced quotes in string literal"
+                )
 
-        return True
+        elif isinstance(expr, exp.Select):
+            # Additional checks specific to SELECT statements
+            if any(isinstance(e, exp.Union) for e in expr.find_all(exp.Union)):
+                # Verify UNION usage
+                union_expr = next(expr.find_all(exp.Union))
+                if not (
+                    isinstance(union_expr.left, exp.Select)
+                    and isinstance(union_expr.right, exp.Select)
+                ):
+                    raise SQLInjectionError(
+                        "Potential SQL injection detected - suspicious UNION usage"
+                    )
+
+        # Recursively check all child expressions
+        for child in expr.expressions:
+            self._check_expression_recursively(child)
+
+    def validate(self, parsed: exp.Expression) -> None:
+        """
+        Validates the given SQL query for potential SQL injection attempts.
+
+        Args:
+            parsed: The parsed SQL expression to validate
+
+        Raises:
+            SQLInjectionError: If potential SQL injection is detected
+            ValueError: If the input is invalid
+        """
+        if not parsed:
+            raise ValueError("Expression must not be empty")
+
+        try:
+            self._check_expression_recursively(parsed)
+        except SQLInjectionError as e:
+            raise e
+        except Exception as e:
+            raise ValueError(f"Invalid SQL expression: {str(e)}")
