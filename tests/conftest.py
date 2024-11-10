@@ -16,6 +16,54 @@ from langsec.schema import ColumnAccess
 
 
 @pytest.fixture
+def security_guard_with_default_values():
+    """Provides a security guard with default table and column security schemas."""
+    # Don't allow joins at all, apply max_rows limit
+    default_table_schema = TableSchema(
+        max_rows=500,
+        require_where_clause=False,
+        allowed_joins={}
+    )
+    
+    # Allow all reads and only SUM aggregations
+    default_column_schema = ColumnSchema(
+        access=ColumnAccess.READ,
+        allowed_aggregations={AggregationType.SUM}
+    )
+    
+    security_schema = SecuritySchema(
+        default_table_security_schema=default_table_schema,
+        default_column_security_schema=default_column_schema
+    )
+    
+    return SQLSecurityGuard(security_schema)
+
+
+@pytest.fixture
+def security_guard_deny_all():
+    """Provides a security guard with default table and column security schemas."""
+    # Don't allow joins at all, apply max_rows limit
+    default_table_schema = TableSchema(
+        max_rows=500,
+        require_where_clause=False,
+        allowed_joins={}
+    )
+    
+    # Allow all reads and only SUM aggregations
+    default_column_schema = ColumnSchema(
+        access=ColumnAccess.DENIED,
+        allowed_aggregations={AggregationType.SUM}
+    )
+    
+    security_schema = SecuritySchema(
+        default_table_security_schema=default_table_schema,
+        default_column_security_schema=default_column_schema
+    )
+    
+    return SQLSecurityGuard(security_schema)
+
+
+@pytest.fixture
 def basic_schema():
     """Provides a basic security schema for testing."""
     return SecuritySchema(

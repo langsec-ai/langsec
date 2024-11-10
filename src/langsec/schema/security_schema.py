@@ -12,6 +12,7 @@ class ColumnAccess(str, Enum):
     WRITE = "write"
     DENIED = "denied"
 
+
 # TODO: Move to SQL
 class ColumnSchema(BaseModel):
     access: Optional[ColumnAccess] = None
