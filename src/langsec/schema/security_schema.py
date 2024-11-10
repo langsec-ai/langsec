@@ -81,14 +81,16 @@ class SecuritySchema(BaseModel):
 
     def get_table_schema(self, table_name: str) -> TableSchema:
         """Returns the table schema, or the default if not found."""
+        if self.tables is None:
+            return self.default_table_security_schema
         return self.tables.get(table_name, self.default_table_security_schema)
 
     def get_column_schema(self, table_name: str, column_name: str) -> ColumnSchema:
         """Returns the column schema, or the default if not found."""
         table_schema = self.get_table_schema(table_name)
-        if table_schema:
-            return table_schema.columns.get(column_name, self.default_column_security_schema)
-        return self.default_column_security_schema
+        if not table_schema:
+            return self.default_column_security_schema
+        return table_schema.columns.get(column_name, self.default_column_security_schema)
 
     @field_validator("tables", mode="before")
     @classmethod

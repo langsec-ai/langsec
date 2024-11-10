@@ -43,9 +43,6 @@ class QueryValidator:
         self._validate_query_length(query)
         self._validate_forbidden_keywords(query)
 
-        if not self.schema.tables:
-            return True
-
         parsed = parse_one(query)
 
         # Run all validators

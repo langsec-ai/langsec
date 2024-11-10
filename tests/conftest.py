@@ -14,9 +14,49 @@ from langsec.schema.sql import (
 
 from langsec.schema import ColumnAccess
 
+@pytest.fixture
+def security_schema_allow_all():
+    # Don't allow joins at all, apply max_rows limit
+    default_table_schema = TableSchema(
+        max_rows=500,
+        require_where_clause=False,
+        allowed_joins={}
+    )
+    
+    # Allow all reads and only SUM aggregations
+    default_column_schema = ColumnSchema(
+        access=ColumnAccess.READ,
+        allowed_aggregations={AggregationType.SUM, AggregationType.COUNT}
+    )
+    
+    return SecuritySchema(
+        default_table_security_schema=default_table_schema,
+        default_column_security_schema=default_column_schema
+    )
+
 
 @pytest.fixture
-def security_guard_with_default_values():
+def security_guard_allow_all(security_schema_allow_all):
+    """Provides a security guard with default table and column security schemas."""
+    return SQLSecurityGuard(security_schema_allow_all)
+
+
+@pytest.fixture
+def security_deny_only_email_column(security_schema_allow_all: SecuritySchema):
+    # This schema has allow all but also denied access to the users column
+    security_schema_allow_all.tables = {
+        "users": TableSchema(
+            columns={
+                "email": ColumnSchema(access=ColumnAccess.DENIED),
+            },
+        )
+    }
+
+    return SQLSecurityGuard(security_schema_allow_all)
+
+
+@pytest.fixture
+def security_guard_deny_AVG():
     """Provides a security guard with default table and column security schemas."""
     # Don't allow joins at all, apply max_rows limit
     default_table_schema = TableSchema(
@@ -52,7 +92,7 @@ def security_guard_deny_all():
     # Allow all reads and only SUM aggregations
     default_column_schema = ColumnSchema(
         access=ColumnAccess.DENIED,
-        allowed_aggregations={AggregationType.SUM}
+        allowed_aggregations=set()
     )
     
     security_schema = SecuritySchema(
@@ -61,6 +101,31 @@ def security_guard_deny_all():
     )
     
     return SQLSecurityGuard(security_schema)
+
+
+@pytest.fixture
+def security_guard_require_where_clause_all():
+    """Provides a security guard with default table and column security schemas."""
+    # Don't allow joins at all, apply max_rows limit
+    default_table_schema = TableSchema(
+        max_rows=500,
+        require_where_clause=True,
+        allowed_joins={}
+    )
+    
+    # Allow all reads and only SUM aggregations
+    default_column_schema = ColumnSchema(
+        access=ColumnAccess.READ,
+        allowed_aggregations=set(),
+    )
+    
+    security_schema = SecuritySchema(
+        default_table_security_schema=default_table_schema,
+        default_column_security_schema=default_column_schema
+    )
+    
+    return SQLSecurityGuard(security_schema)
+
 
 
 @pytest.fixture
@@ -130,6 +195,7 @@ def complex_schema():
                     "amount": ColumnSchema(
                         access=ColumnAccess.READ,
                         allowed_aggregations={
+                            AggregationType.MAX,
                             AggregationType.SUM,
                             AggregationType.AVG,
                             AggregationType.COUNT,
