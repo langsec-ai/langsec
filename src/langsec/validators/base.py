@@ -1,6 +1,6 @@
 from typing import Optional
 from sqlglot import exp
-from ..models.schema import SecuritySchema
+from ..schema.security_schema import SecuritySchema
 from abc import ABC, abstractmethod
 
 

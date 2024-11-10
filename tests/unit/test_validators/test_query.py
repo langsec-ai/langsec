@@ -5,7 +5,7 @@ from langsec.exceptions.errors import (
     JoinViolationError,
     QueryComplexityError,
 )
-from langsec.models.enums import QueryType
+from langsec.schema.sql import QueryType
 from langsec.core.security import SQLSecurityGuard
 
 

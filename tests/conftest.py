@@ -1,13 +1,18 @@
 import pytest
 from langsec import SQLSecurityGuard
-from langsec.models.schema import (
+from langsec.schema import (
     SecuritySchema,
     TableSchema,
-    ColumnRule,
+    ColumnSchema,
+)
+from langsec.schema.sql import (
     JoinRule,
     QueryType,
+    JoinType, 
+    AggregationType
 )
-from langsec.models.enums import ColumnAccess, JoinType, AggregationType
+
+from langsec.schema import ColumnAccess
 
 
 @pytest.fixture
@@ -17,11 +22,11 @@ def basic_schema():
         tables={
             "users": TableSchema(
                 columns={
-                    "id": ColumnRule(access=ColumnAccess.READ),
-                    "username": ColumnRule(access=ColumnAccess.READ),
-                    "email": ColumnRule(access=ColumnAccess.DENIED),
-                    "created_at": ColumnRule(access=ColumnAccess.READ),
-                    "column_1": ColumnRule(
+                    "id": ColumnSchema(access=ColumnAccess.READ),
+                    "username": ColumnSchema(access=ColumnAccess.READ),
+                    "email": ColumnSchema(access=ColumnAccess.DENIED),
+                    "created_at": ColumnSchema(access=ColumnAccess.READ),
+                    "column_1": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for length test
                 },
@@ -33,9 +38,9 @@ def basic_schema():
             ),
             "orders": TableSchema(
                 columns={
-                    "id": ColumnRule(access=ColumnAccess.READ),
-                    "user_id": ColumnRule(access=ColumnAccess.READ),
-                    "amount": ColumnRule(
+                    "id": ColumnSchema(access=ColumnAccess.READ),
+                    "user_id": ColumnSchema(access=ColumnAccess.READ),
+                    "amount": ColumnSchema(
                         access=ColumnAccess.READ,
                         allowed_aggregations={AggregationType.SUM, AggregationType.AVG},
                     ),
@@ -57,12 +62,12 @@ def complex_schema():
         tables={
             "users": TableSchema(
                 columns={
-                    "id": ColumnRule(access=ColumnAccess.READ),
-                    "username": ColumnRule(access=ColumnAccess.READ),
-                    "email": ColumnRule(access=ColumnAccess.DENIED),
-                    "created_at": ColumnRule(access=ColumnAccess.READ),
+                    "id": ColumnSchema(access=ColumnAccess.READ),
+                    "username": ColumnSchema(access=ColumnAccess.READ),
+                    "email": ColumnSchema(access=ColumnAccess.DENIED),
+                    "created_at": ColumnSchema(access=ColumnAccess.READ),
                     # Add case statement columns
-                    "order_frequency": ColumnRule(access=ColumnAccess.READ),
+                    "order_frequency": ColumnSchema(access=ColumnAccess.READ),
                 },
                 max_rows=1000,
                 require_where_clause=True,
@@ -72,9 +77,9 @@ def complex_schema():
             ),
             "orders": TableSchema(
                 columns={
-                    "id": ColumnRule(access=ColumnAccess.READ),
-                    "user_id": ColumnRule(access=ColumnAccess.READ),
-                    "amount": ColumnRule(
+                    "id": ColumnSchema(access=ColumnAccess.READ),
+                    "user_id": ColumnSchema(access=ColumnAccess.READ),
+                    "amount": ColumnSchema(
                         access=ColumnAccess.READ,
                         allowed_aggregations={
                             AggregationType.SUM,
@@ -82,11 +87,11 @@ def complex_schema():
                             AggregationType.COUNT,
                         },
                     ),
-                    "product_id": ColumnRule(access=ColumnAccess.READ),
-                    "total_spent": ColumnRule(
+                    "product_id": ColumnSchema(access=ColumnAccess.READ),
+                    "total_spent": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for alias test
-                    "order_count": ColumnRule(
+                    "order_count": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for subquery
                 },
@@ -97,9 +102,9 @@ def complex_schema():
             ),
             "products": TableSchema(
                 columns={
-                    "id": ColumnRule(access=ColumnAccess.READ),
-                    "name": ColumnRule(access=ColumnAccess.READ),
-                    "price": ColumnRule(
+                    "id": ColumnSchema(access=ColumnAccess.READ),
+                    "name": ColumnSchema(access=ColumnAccess.READ),
+                    "price": ColumnSchema(
                         access=ColumnAccess.READ,
                         allowed_aggregations={
                             AggregationType.AVG,
@@ -107,20 +112,20 @@ def complex_schema():
                             AggregationType.MAX,
                         },
                     ),
-                    "category": ColumnRule(
+                    "category": ColumnSchema(
                         access=ColumnAccess.READ,
                         allowed_aggregations={AggregationType.COUNT},
                     ),
-                    "product_count": ColumnRule(
+                    "product_count": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for aggregation
-                    "avg_price": ColumnRule(
+                    "avg_price": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for aggregation
-                    "total_sales": ColumnRule(
+                    "total_sales": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for aggregation
-                    "max_product_price": ColumnRule(
+                    "max_product_price": ColumnSchema(
                         access=ColumnAccess.READ
                     ),  # Added for complex joins test
                 },

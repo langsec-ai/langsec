@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, Optional
 from sqlglot import exp
 from .base import BaseQueryValidator
-from ..models.enums import JoinType
+from ..schema.sql.enums import JoinType
 from ..exceptions.errors import JoinViolationError
 
 

@@ -1,7 +1,7 @@
 from sqlglot import exp
 from .base import BaseQueryValidator
 from ..exceptions.errors import QueryComplexityError
-from ..models.enums import QueryType
+from ..schema.sql.enums import QueryType
 
 
 class QueryTypeValidator(BaseQueryValidator):

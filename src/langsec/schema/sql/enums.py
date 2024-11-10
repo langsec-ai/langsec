@@ -1,12 +1,6 @@
 from enum import Enum
 
 
-class ColumnAccess(str, Enum):
-    READ = "read"
-    WRITE = "write"
-    DENIED = "denied"
-
-
 class AggregationType(str, Enum):
     COUNT = "count"
     SUM = "sum"

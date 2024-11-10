@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
-from ..models.schema import SecuritySchema
-from ..models.config import LangSecConfig
+from ..schema.security_schema import SecuritySchema
+from ..config import LangSecConfig
 from ..validators.query import QueryValidator
 from ..validators.injection import SQLInjectionValidator
 

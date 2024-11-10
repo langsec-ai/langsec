@@ -1,10 +1,19 @@
+from enum import Enum
 from typing import Dict, Optional, Set
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from .enums import AggregationType, ColumnAccess, JoinType, QueryType
+from .sql import JoinRule
+
+from .sql.enums import AggregationType, QueryType
 
 
-class ColumnRule(BaseModel):
+class ColumnAccess(str, Enum):
+    READ = "read"
+    WRITE = "write"
+    DENIED = "denied"
+
+# TODO: Move to SQL
+class ColumnSchema(BaseModel):
     access: Optional[ColumnAccess] = None
     max_rows: Optional[int] = None
     allowed_operations: Optional[Set[str]] = Field(default_factory=set)
@@ -13,16 +22,9 @@ class ColumnRule(BaseModel):
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
 
-class JoinRule(BaseModel):
-    allowed_types: Set[JoinType] = Field(
-        default_factory=lambda: {JoinType.INNER, JoinType.LEFT}
-    )
-
-    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
-
-
+# TODO: Move to SQL
 class TableSchema(BaseModel):
-    columns: Dict[str, ColumnRule] = Field(default_factory=dict)
+    columns: Dict[str, ColumnSchema] = Field(default_factory=dict)
     max_rows: Optional[int] = None  # TODO: implement.
     allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
     require_where_clause: bool = False
@@ -69,8 +71,23 @@ class SecuritySchema(BaseModel):
             QueryType.SELECT
         }  # Default to only allowing SELECT queries
     )
+    
+    # Declare default values for unspecified tables and columns
+    default_table_security_schema: Optional[TableSchema] = None
+    default_column_security_schema: Optional[ColumnSchema] = None
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
+
+    def get_table_schema(self, table_name: str) -> TableSchema:
+        """Returns the table schema, or the default if not found."""
+        return self.tables.get(table_name, self.default_table_security_schema)
+
+    def get_column_schema(self, table_name: str, column_name: str) -> ColumnSchema:
+        """Returns the column schema, or the default if not found."""
+        table_schema = self.get_table_schema(table_name)
+        if table_schema:
+            return table_schema.columns.get(column_name, self.default_column_security_schema)
+        return self.default_column_security_schema
 
     @field_validator("tables", mode="before")
     @classmethod

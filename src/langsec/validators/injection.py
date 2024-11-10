@@ -1,7 +1,7 @@
 from typing import List, Pattern, Set, Optional
 from ..exceptions.errors import SQLInjectionError
 from .base import BaseQueryValidator
-from ..models.schema import SecuritySchema
+from ..schema.security_schema import SecuritySchema
 import re
 from sqlglot import exp
 

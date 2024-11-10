@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlglot import parse_one
-from ..models.schema import SecuritySchema
-from ..models.config import LangSecConfig
+from ..schema.security_schema import SecuritySchema
+from ..config import LangSecConfig
 from ..exceptions.errors import (
     QueryComplexityError,
 )
