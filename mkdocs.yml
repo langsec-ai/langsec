@@ -7,6 +7,8 @@ theme:
     - navigation.top
     - search.suggest
     - search.highlight
+    - content.code.copy
+    - content.code.annotate
   palette:
     - scheme: default
       primary: indigo
@@ -20,6 +22,14 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 nav:
   - Home: index.md
   - Quick Start:
