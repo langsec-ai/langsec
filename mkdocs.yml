@@ -1,4 +1,7 @@
 site_name: LangSec Documentation
+site_description: Documentation for LangSec
+site_author: LangSec AI
+site_url: https://docs.lang-sec.com
 repo_name: langsec-ai/langsec
 repo_url: https://github.com/langsec-ai/langsec
 theme:
