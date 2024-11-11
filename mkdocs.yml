@@ -37,5 +37,6 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Docs:
+    - Installation: installation.md
     - Quick Start: quick-start.md
   - GitHub: https://github.com/langsec-ai/langsec
