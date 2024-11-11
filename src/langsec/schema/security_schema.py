@@ -16,7 +16,6 @@ class ColumnAccess(str, Enum):
 # TODO: Move to SQL
 class ColumnSchema(BaseModel):
     access: Optional[ColumnAccess] = None
-    max_rows: Optional[int] = None
     allowed_operations: Optional[Set[str]] = Field(default_factory=set)
     allowed_aggregations: Optional[Set[AggregationType]] = Field(default_factory=set)
 
@@ -26,10 +25,9 @@ class ColumnSchema(BaseModel):
 # TODO: Move to SQL
 class TableSchema(BaseModel):
     columns: Dict[str, ColumnSchema] = Field(default_factory=dict)
-    max_rows: Optional[int] = None  # TODO: implement.
     allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
     require_where_clause: bool = False
-    allowed_where_columns: Set[str] = Field(default_factory=set)
+    allowed_where_columns: Set[str] = Field(default_factory=set)    
     allow_group_by: bool = True
     allowed_group_by_columns: Set[str] = Field(default_factory=set)
 
