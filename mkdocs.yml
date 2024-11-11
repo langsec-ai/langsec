@@ -1,6 +1,10 @@
 site_name: LangSec Documentation
+repo_name: langsec-ai/langsec
+repo_url: https://github.com/langsec-ai/langsec
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.tabs
     - navigation.sections
@@ -32,6 +36,6 @@ markdown_extensions:
   - pymdownx.superfences
 nav:
   - Home: index.md
-  - Quick Start:
-    - Overview: quick-start.md
-  - GitHub: github.com/langsec-ai/langsec
+  - Docs:
+    - Quick Start: quick-start.md
+  - GitHub: https://github.com/langsec-ai/langsec
