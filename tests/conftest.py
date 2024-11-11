@@ -19,6 +19,7 @@ def security_schema_allow_all():
     # Don't allow joins at all
     default_table_schema = TableSchema(
         require_where_clause=False,
+        default_allowed_join=JoinRule(allowed_types={JoinType.CROSS, JoinType.INNER, JoinType.RIGHT, JoinType.LEFT})
     )
     
     # Allow all reads and only SUM aggregations
@@ -102,21 +103,20 @@ def security_guard_deny_all():
 @pytest.fixture
 def security_guard_require_where_clause_all():
     """Provides a security guard with default table and column security schemas."""
-    # Don't allow joins at all
-    default_table_schema = TableSchema(
+
+    default_table_security_schema=TableSchema(
         require_where_clause=True,
-        allowed_joins={}
+        default_allowed_join=None
     )
     
-    # Allow all reads and only SUM aggregations
-    default_column_schema = ColumnSchema(
+    default_column_security_schema=ColumnSchema(
         access=ColumnAccess.READ,
         allowed_aggregations=set(),
     )
     
     security_schema = SecuritySchema(
-        default_table_security_schema=default_table_schema,
-        default_column_security_schema=default_column_schema
+        default_table_security_schema=default_table_security_schema,
+        default_column_security_schema=default_column_security_schema
     )
     
     return SQLSecurityGuard(security_schema)
