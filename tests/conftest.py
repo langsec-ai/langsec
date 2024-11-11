@@ -16,11 +16,9 @@ from langsec.schema import ColumnAccess
 
 @pytest.fixture
 def security_schema_allow_all():
-    # Don't allow joins at all, apply max_rows limit
+    # Don't allow joins at all
     default_table_schema = TableSchema(
-        max_rows=500,
         require_where_clause=False,
-        allowed_joins={}
     )
     
     # Allow all reads and only SUM aggregations
@@ -58,9 +56,8 @@ def security_deny_only_email_column(security_schema_allow_all: SecuritySchema):
 @pytest.fixture
 def security_guard_deny_AVG():
     """Provides a security guard with default table and column security schemas."""
-    # Don't allow joins at all, apply max_rows limit
+    # Don't allow joins at all
     default_table_schema = TableSchema(
-        max_rows=500,
         require_where_clause=False,
         allowed_joins={}
     )
@@ -82,9 +79,8 @@ def security_guard_deny_AVG():
 @pytest.fixture
 def security_guard_deny_all():
     """Provides a security guard with default table and column security schemas."""
-    # Don't allow joins at all, apply max_rows limit
+    # Don't allow joins at all
     default_table_schema = TableSchema(
-        max_rows=500,
         require_where_clause=False,
         allowed_joins={}
     )
@@ -106,9 +102,8 @@ def security_guard_deny_all():
 @pytest.fixture
 def security_guard_require_where_clause_all():
     """Provides a security guard with default table and column security schemas."""
-    # Don't allow joins at all, apply max_rows limit
+    # Don't allow joins at all
     default_table_schema = TableSchema(
-        max_rows=500,
         require_where_clause=True,
         allowed_joins={}
     )
@@ -127,7 +122,6 @@ def security_guard_require_where_clause_all():
     return SQLSecurityGuard(security_schema)
 
 
-
 @pytest.fixture
 def basic_schema():
     """Provides a basic security schema for testing."""
@@ -143,7 +137,6 @@ def basic_schema():
                         access=ColumnAccess.READ
                     ),  # Added for length test
                 },
-                max_rows=1000,
                 require_where_clause=True,
                 allowed_joins={
                     "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
@@ -182,10 +175,10 @@ def complex_schema():
                     # Add case statement columns
                     "order_frequency": ColumnSchema(access=ColumnAccess.READ),
                 },
-                max_rows=1000,
                 require_where_clause=True,
                 allowed_joins={
-                    "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
+                    "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
+                    "products": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
                 },
             ),
             "orders": TableSchema(

@@ -14,6 +14,7 @@ class JoinType(str, Enum):
     LEFT = "left"
     RIGHT = "right"
     FULL = "full"
+    CROSS = "cross"
 
 
 class QueryType(str, Enum):
