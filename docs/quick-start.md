@@ -1,5 +1,3 @@
-## Quick Start
-
 LangSec is a Python library for securing SQL queries. It allows you to define a security schema for your database and validate SQL queries against it.
 
 ```python
