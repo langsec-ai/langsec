@@ -79,6 +79,18 @@ class SecuritySchema(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
+    def get_prompt(self) -> str:
+        prompt = "Generate an SQL query adhering to the following constraints:\n"
+        prompt += f"- Maximum joins allowed: {self.max_joins}\n"
+        prompt += f"- Subqueries allowed: {'Yes' if self.allow_subqueries else 'No'}\n"
+        prompt += f"- Unions allowed: {'Yes' if self.allow_unions else 'No'}\n"
+        prompt += f"- Temporary tables allowed: {'Yes' if self.allow_temp_tables else 'No'}\n"
+        prompt += f"- Maximum query length: {self.max_query_length if self.max_query_length else 'Unlimited'}\n"
+        prompt += f"- SQL Injection Protection: {'Enabled' if self.sql_injection_protection else 'Disabled'}\n"
+        prompt += f"- Forbidden keywords: {', '.join(self.forbidden_keywords)}\n"
+        prompt += f"- Allowed query types: {', '.join(qt.value for qt in self.allowed_query_types)}\n"
+        return prompt
+
     def get_table_schema(self, table_name: str) -> TableSchema:
         """Returns the table schema, or the default if not found."""
         if self.tables is None:
