@@ -1,5 +1,5 @@
 [![Version](https://img.shields.io/github/v/release/langsec-ai/langsec)](https://github.com/langsec-ai/langsec/releases)
-![License](https://img.shields.io/github/license/langsec-ai/langsec)
+[![License](https://img.shields.io/github/license/langsec-ai/langsec)](https://img.shields.io/github/license/langsec-ai/langsec)
 [![Stars](https://img.shields.io/github/stars/langsec-ai/langsec?style=social)](https://github.com/langsec-ai/langsec/stargazers)
 
 
