@@ -2,7 +2,7 @@ from typing import Dict, Tuple, Optional
 from sqlglot import exp
 from .base import BaseQueryValidator
 from ..schema.sql.enums import JoinType
-from ..exceptions.errors import JoinViolationError
+from ..exceptions.errors import AllowedJoinNotDefinedViolationError, JoinViolationError
 
 
 class JoinValidator(BaseQueryValidator):
@@ -35,16 +35,16 @@ class JoinValidator(BaseQueryValidator):
         left_schema = self.schema.get_table_schema(left_table)
         right_schema = self.schema.get_table_schema(right_table)
 
-        if not left_schema or not left_schema.allowed_joins:
+        left_join_rule = left_schema.get_table_allowed_joins(right_table)
+        right_join_rule = right_schema.get_table_allowed_joins(left_table)
+
+        if not left_join_rule:
             raise JoinViolationError(f"No join rules defined for table {left_table}")
-        if not right_schema or not right_schema.allowed_joins:
+        if not right_join_rule:
             raise JoinViolationError(f"No join rules defined for table {right_table}")
 
         # For FULL JOIN, check both directions
         if join_type == JoinType.FULL:
-            left_join_rule = left_schema.allowed_joins.get(right_table)
-            right_join_rule = right_schema.allowed_joins.get(left_table)
-
             if not left_join_rule or not right_join_rule:
                 raise JoinViolationError(
                     f"FULL JOIN between {left_table} and {right_table} is not allowed"
@@ -60,16 +60,13 @@ class JoinValidator(BaseQueryValidator):
 
         # Handle RIGHT JOIN by checking if equivalent LEFT JOIN is allowed in reverse direction
         elif join_type == JoinType.RIGHT:
-            join_rule = right_schema.allowed_joins.get(left_table)
-            if not join_rule or JoinType.LEFT not in join_rule.allowed_types:
+            if not right_join_rule or JoinType.LEFT not in right_join_rule.allowed_types:
                 raise JoinViolationError(
                     f"RIGHT JOIN from {left_table} to {right_table} is not allowed as {right_table} "
                     f"does not allow LEFT JOIN with {left_table}"
                 )
 
         elif join_type == JoinType.CROSS:
-            left_join_rule = left_schema.allowed_joins.get(right_table)
-            right_join_rule = right_schema.allowed_joins.get(left_table)
             if not left_join_rule and not right_join_rule:
                 raise JoinViolationError(
                     f"CROSS JOIN between {left_table} and {right_table} is not allowed"
@@ -82,16 +79,15 @@ class JoinValidator(BaseQueryValidator):
 
         # For LEFT and INNER joins, validate normally
         else:
-            join_rule = left_schema.allowed_joins.get(right_table)
-            if not join_rule:
+            if not left_join_rule:
                 raise JoinViolationError(
                     f"Join between {left_table} and {right_table} is not allowed"
                 )
 
-            if join_type not in join_rule.allowed_types:
+            if join_type not in left_join_rule.allowed_types:
                 raise JoinViolationError(
                     f"Join type {join_type} not allowed between {left_table} and {right_table}. "
-                    f"Allowed types: {join_rule.allowed_types}"
+                    f"Allowed types: {left_join_rule.allowed_types}"
                 )
 
     def _collect_table_aliases(self, parsed: exp.Expression) -> Dict[str, str]:
@@ -123,13 +119,12 @@ class JoinValidator(BaseQueryValidator):
 
     def _get_join_type(self, join: exp.Join) -> JoinType:
         """Determines the type of join from the sqlglot Join expression.""" 
-        
         if join.kind == "CROSS":
             return JoinType.CROSS
         
         if not join.side:
             return JoinType.INNER
-
+        
         join_side = join.side.upper()
         if join_side == "RIGHT":
             return JoinType.RIGHT

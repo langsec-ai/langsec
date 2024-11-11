@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from .sql import JoinRule
@@ -25,13 +25,22 @@ class ColumnSchema(BaseModel):
 # TODO: Move to SQL
 class TableSchema(BaseModel):
     columns: Dict[str, ColumnSchema] = Field(default_factory=dict)
+    
     allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
+    default_allowed_join: Optional[JoinRule] = Field(default_factory=JoinRule)
+    
     require_where_clause: bool = False
-    allowed_where_columns: Set[str] = Field(default_factory=set)    
+    allowed_where_columns: Set[str] = Field(default_factory=set)
+    
     allow_group_by: bool = True
     allowed_group_by_columns: Set[str] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
+
+    def get_table_allowed_joins(self, column: str) -> Union[JoinRule, None]:
+        if column in self.allowed_joins:
+            return self.allowed_joins[column]
+        return self.default_allowed_join
 
     @field_validator("allowed_joins", mode="before")
     @classmethod
