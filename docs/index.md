@@ -14,9 +14,9 @@
 ## LangSec: A Security Framework for Text-to-SQL
 A security framework for validating and securing LLM-generated SQL queries. LangSec helps prevent SQL injection, unauthorized access, and other security vulnerabilities when working with language models that generate SQL.
 
-![Text To SQL Abuse](../assets/langsecgif.gif)
+![Text To SQL Abuse](https://github.com/langsec-ai/langsec/blob/main/assets/langsecgif.gif?raw=true)
 
 Demonstration of making a malicious query using [Vanna](https://github.com/vanna-ai/vanna).
 LangSec helps prevent such attacks by validating generated queries against a security schema.
 
-![LangSec](../assets/image.png)
+![LangSec](https://github.com/langsec-ai/langsec/blob/main/assets/image.png?raw=true)
