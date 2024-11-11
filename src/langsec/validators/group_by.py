@@ -12,7 +12,7 @@ class GroupByValidator(BaseQueryValidator):
             if group_by_exprs:
                 tables = self._get_tables_from_select(select)
                 for table_name in tables:
-                    table_schema = self.schema.tables.get(table_name)
+                    table_schema = self.schema.get_table_schema(table_name)
                     if table_schema:
                         if table_schema.allow_group_by is False:
                             raise QueryComplexityError(

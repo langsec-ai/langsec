@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlglot import parse_one
-from ..models.schema import SecuritySchema
-from ..models.config import LangSecConfig
+from ..schema.security_schema import SecuritySchema
+from ..config import LangSecConfig
 from ..exceptions.errors import (
     QueryComplexityError,
 )
@@ -42,9 +42,6 @@ class QueryValidator:
         """Validates a query against all configured rules."""
         self._validate_query_length(query)
         self._validate_forbidden_keywords(query)
-
-        if not self.schema.tables:
-            return True
 
         parsed = parse_one(query)
 

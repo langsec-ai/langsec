@@ -1,6 +1,9 @@
 from .core.security import SQLSecurityGuard
-from .models.schema import SecuritySchema
-from .models.config import LangSecConfig
+from .schema.security_schema import SecuritySchema
+from .config import LangSecConfig
 from .exceptions.errors import LangSecError
 
-__all__ = ["SQLSecurityGuard", "SecuritySchema", "LangSecConfig", "LangSecError"]
+# Import support for all DB here:
+from .schema.sql.connectors import sql_security_schema
+
+__all__ = ["SQLSecurityGuard", "SecuritySchema", "LangSecConfig", "LangSecError", "sql_security_schema"]

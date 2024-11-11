@@ -23,7 +23,7 @@ pip install langsec
 
 ```python
 from langsec import SQLSecurityGuard
-from langsec.models.schema import SecuritySchema, TableSchema, ColumnRule
+from langsec.models.schema import SecuritySchema, TableSchema, ColumnSchema
 from langsec.models.enums import ColumnAccess
 
 # Define your security schema
@@ -31,9 +31,9 @@ schema = SecuritySchema(
     tables={
         "users": TableSchema(
             columns={
-                "id": ColumnRule(access=ColumnAccess.READ),
-                "username": ColumnRule(access=ColumnAccess.READ),
-                "email": ColumnRule(access=ColumnAccess.DENIED),
+                "id": ColumnSchema(access=ColumnAccess.READ),
+                "username": ColumnSchema(access=ColumnAccess.READ),
+                "email": ColumnSchema(access=ColumnAccess.DENIED),
             }
         )
     }
@@ -60,17 +60,17 @@ except Exception as e:
 The security schema defines what operations are allowed on your database:
 
 ```python
-from langsec.models.schema import SecuritySchema, TableSchema, ColumnRule, JoinRule
+from langsec.models.schema import SecuritySchema, TableSchema, ColumnSchema, JoinRule
 from langsec.models.enums import ColumnAccess, JoinType, AggregationType
 
 schema = SecuritySchema(
     tables={
         "users": TableSchema(
             columns={
-                "id": ColumnRule(access=ColumnAccess.READ),
-                "username": ColumnRule(access=ColumnAccess.READ),
-                "email": ColumnRule(access=ColumnAccess.DENIED),
-                "created_at": ColumnRule(access=ColumnAccess.READ),
+                "id": ColumnSchema(access=ColumnAccess.READ),
+                "username": ColumnSchema(access=ColumnAccess.READ),
+                "email": ColumnSchema(access=ColumnAccess.DENIED),
+                "created_at": ColumnSchema(access=ColumnAccess.READ),
             },
             max_rows=1000,
             require_where_clause=True,
@@ -80,8 +80,8 @@ schema = SecuritySchema(
         ),
         "orders": TableSchema(
             columns={
-                "id": ColumnRule(access=ColumnAccess.READ),
-                "amount": ColumnRule(
+                "id": ColumnSchema(access=ColumnAccess.READ),
+                "amount": ColumnSchema(
                     access=ColumnAccess.READ,
                     allowed_aggregations={AggregationType.SUM, AggregationType.AVG},
                 ),

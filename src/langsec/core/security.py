@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
-from ..models.schema import SecuritySchema
-from ..models.config import LangSecConfig
+from ..schema.security_schema import SecuritySchema
+from ..config import LangSecConfig
 from ..validators.query import QueryValidator
 from ..validators.injection import SQLInjectionValidator
 
@@ -42,8 +42,12 @@ class SQLSecurityGuard:
                 self.logger.info(f"Validating query: {query}")
 
             # Validate against schema if provided
-            if self.schema.tables:
-                self.query_validator.validate(query)
+            if not self.schema.tables and \
+                not self.schema.default_table_security_schema and \
+                not self.schema.default_column_security_schema:
+                    raise RuntimeError("Must provide tables, default_table_security_schema or default_column_security_schema")
+                
+            self.query_validator.validate(query)
 
             if self.config.log_queries:
                 self.logger.info("Query validation successful")

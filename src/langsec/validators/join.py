@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, Optional
 from sqlglot import exp
 from .base import BaseQueryValidator
-from ..models.enums import JoinType
+from ..schema.sql.enums import JoinType
 from ..exceptions.errors import JoinViolationError
 
 
@@ -35,8 +35,8 @@ class JoinValidator(BaseQueryValidator):
         join_type = self._get_join_type(join)
 
         # Get schema for both tables
-        left_schema = self.schema.tables.get(left_table)
-        right_schema = self.schema.tables.get(right_table)
+        left_schema = self.schema.get_table_schema(left_table)
+        right_schema = self.schema.get_table_schema(right_table)
 
         if not left_schema or not left_schema.allowed_joins:
             raise JoinViolationError(f"No join rules defined for table {left_table}")

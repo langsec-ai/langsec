@@ -12,7 +12,7 @@ class WhereValidator(BaseQueryValidator):
                 # Check tables that require WHERE clause
                 tables = self._get_tables_from_select(select)
                 for table_name in tables:
-                    table_schema = self.schema.tables.get(table_name)
+                    table_schema = self.schema.get_table_schema(table_name)
                     if table_schema and table_schema.require_where_clause:
                         raise QueryComplexityError(
                             f"Table '{table_name}' requires a WHERE clause"
@@ -27,7 +27,7 @@ class WhereValidator(BaseQueryValidator):
             if not table_name:
                 continue
 
-            table_schema = self.schema.tables.get(table_name)
+            table_schema = self.schema.get_table_schema(table_name)
             if not table_schema or not table_schema.allowed_where_columns:
                 continue
 

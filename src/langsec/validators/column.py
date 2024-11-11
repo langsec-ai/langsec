@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 from sqlglot import exp
 from .base import BaseQueryValidator
-from ..models.enums import ColumnAccess
+from ..schema import ColumnAccess
 from ..exceptions.errors import ColumnAccessError
 
 
@@ -37,12 +37,8 @@ class ColumnValidator(BaseQueryValidator):
             if not table_name:
                 continue
 
-            table_schema = self.schema.tables.get(table_name)
-            if not table_schema:
-                raise ColumnAccessError(f"Table not found in schema: {table_name}")
-
             column_name = str(column.name).lower()
-            column_rule = table_schema.columns.get(column_name)
+            column_rule = self.schema.get_column_schema(table_name, column_name)
 
             # Check if column exists in schema
             if not column_rule:
