@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from sqlglot import exp
 from ..schema.security_schema import SecuritySchema
 from abc import ABC, abstractmethod
@@ -13,7 +13,7 @@ class BaseQueryValidator(ABC):
         """Validates the given SQL query."""
 
     def _get_default_table(
-        self, parsed: exp.Expression, column_hint: exp.Column | None
+        self, parsed: exp.Expression, column_hint: Union[exp.Column, None]
     ) -> Optional[str]:
         """Gets the default table when column table is not specified."""
         # Sometimes we can get the table name straight from the expression
