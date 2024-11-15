@@ -5,19 +5,22 @@ from langsec.schema.security_schema import (
     TableSchema,
     ColumnSchema,
 )
-from langsec.schema.sql import (
-    QueryType,
+from langsec.schema.sql.enums import (
     JoinType, 
     AggregationType,
+    Access
 )
-from langsec.schema import Access
 
 @pytest.fixture
 def security_schema_allow_all():
     """Provides a security schema that allows most operations."""
     default_table_schema = TableSchema(
-        require_where_clause=False,
-        default_allowed_join={JoinType.CROSS, JoinType.INNER, JoinType.RIGHT, JoinType.LEFT}
+        default_allowed_join={
+            JoinType.CROSS, 
+            JoinType.INNER, 
+            JoinType.RIGHT, 
+            JoinType.LEFT
+        }
     )
     
     default_column_schema = ColumnSchema(
@@ -243,3 +246,65 @@ def security_deny_only_email_column(security_schema_allow_all: SecuritySchema):
     }
 
     return SQLSecurityGuard(security_schema_allow_all)
+
+@pytest.fixture
+def mixed_access_schema():
+    """
+    Provides a security schema with mixed read/write access:
+    - users table:
+        - id: read-only (SELECT only)
+        - username: read-only (SELECT only)
+        - email: write (SELECT, UPDATE)
+        - last_login: write (UPDATE, INSERT only - no SELECT)
+    - audit_log table:
+        - id: read-only (SELECT only)
+        - action: write (SELECT, INSERT only)
+        - timestamp: write (INSERT only)
+    """
+    return SecuritySchema(
+        tables={
+            "users": TableSchema(
+                columns={
+                    "id": ColumnSchema(
+                        access=Access.READ,
+                        allowed_operations={"SELECT"}
+                    ),
+                    "username": ColumnSchema(
+                        access=Access.READ,
+                        allowed_operations={"SELECT"}
+                    ),
+                    "email": ColumnSchema(
+                        access=Access.WRITE,
+                        allowed_operations={"SELECT", "UPDATE"}
+                    ),
+                    "last_login": ColumnSchema(
+                        access=Access.WRITE,
+                        allowed_operations={"UPDATE", "INSERT"}  # No SELECT permission
+                    )
+                }
+            ),
+            "audit_log": TableSchema(
+                columns={
+                    "id": ColumnSchema(
+                        access=Access.READ,
+                        allowed_operations={"SELECT"}
+                    ),
+                    "action": ColumnSchema(
+                        access=Access.WRITE,
+                        allowed_operations={"SELECT", "INSERT"}  # Can read and insert
+                    ),
+                    "timestamp": ColumnSchema(
+                        access=Access.WRITE,
+                        allowed_operations={"INSERT"}  # Insert only
+                    )
+                }
+            )
+        },
+        max_joins=1,
+        allow_subqueries=True
+    )
+
+@pytest.fixture
+def mixed_access_guard(mixed_access_schema):
+    """Provides a security guard with mixed read/write access configuration."""
+    return SQLSecurityGuard(mixed_access_schema)

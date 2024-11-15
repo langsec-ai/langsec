@@ -346,3 +346,75 @@ class TestQueryTypes:
     #     # Test INSERT
     #     insert_query = "INSERT INTO users (username) VALUES ('test')"
     #     assert guard.validate_query(insert_query)
+
+class TestColumnAccessWithMixedAccess:
+    def test_mixed_access_permissions(self, mixed_access_guard):
+        """Test various access permissions scenarios."""
+        
+        # Should succeed: Reading from both READ and WRITE columns
+        mixed_access_guard.validate_query("""
+            SELECT id, username, email 
+            FROM users 
+            WHERE id = 1
+        """)
+
+        # Should succeed: Modifying WRITE columns
+        mixed_access_guard.validate_query("""
+            UPDATE users 
+            SET email = 'new@email.com'
+            WHERE id = 1
+        """)
+
+        # Should succeed: Inserting into WRITE columns
+        mixed_access_guard.validate_query("""
+            INSERT INTO audit_log (action) 
+            VALUES ('user_login')
+        """)
+
+        # Should fail: Attempting to modify READ-only column
+        with pytest.raises(ColumnAccessError):
+            mixed_access_guard.validate_query("""
+                UPDATE users 
+                SET username = 'new_username' 
+                WHERE id = 1
+            """)
+
+    def test_mixed_access_complex_queries(self, mixed_access_guard):
+        """Test complex queries with mixed access permissions."""
+        
+        # Should succeed: Complex query using only READ operations
+        mixed_access_guard.validate_query("""
+            SELECT u.id, u.username, u.email
+            FROM users u
+            WHERE u.id IN (
+                SELECT id FROM users WHERE email LIKE '%.com'
+            )
+            GROUP BY u.id, u.username, u.email
+        """)
+
+        # Should fail: Complex query attempting to read from column without SELECT permission
+        with pytest.raises(ColumnAccessError):
+            mixed_access_guard.validate_query("""
+                SELECT u.id, u.username, u.last_login
+                FROM users u
+                WHERE u.id IN (
+                    SELECT id FROM users WHERE email LIKE '%.com'
+                )
+            """)
+
+    def test_delete_permissions(self, mixed_access_guard):
+        """Test delete permissions with mixed access."""
+        
+        # Should fail: DELETE not allowed on users table
+        with pytest.raises(ColumnAccessError):
+            mixed_access_guard.validate_query("""
+                DELETE FROM users
+                WHERE id = 1
+            """)
+
+        # Should fail: DELETE not allowed on audit_log table
+        with pytest.raises(ColumnAccessError):
+            mixed_access_guard.validate_query("""
+                DELETE FROM audit_log
+                WHERE action = 'test'
+            """)

@@ -21,9 +21,9 @@ class Access(str, Enum):
     READ = "read"
     WRITE = "write"
     DENIED = "denied"
-    
 
-class QueryType(str, Enum):
+
+class Operation(str, Enum):
     SELECT = "SELECT"
     JOIN = "JOIN"
     GROUPBY = "GROUPBY"

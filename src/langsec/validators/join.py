@@ -66,8 +66,9 @@ class JoinValidator(BaseQueryValidator):
                 raise JoinViolationError(
                     f"CROSS JOIN between {left_table} and {right_table} is not allowed"
                 )
-            if JoinType.CROSS not in (left_join_rule if left_join_rule else set()) and \
-               JoinType.CROSS not in (right_join_rule if right_join_rule else set()):
+            if JoinType.CROSS not in (
+                left_join_rule if left_join_rule else set()
+            ) and JoinType.CROSS not in (right_join_rule if right_join_rule else set()):
                 raise JoinViolationError(
                     f"CROSS JOIN not allowed between {left_table} and {right_table}"
                 )

@@ -1,7 +1,7 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 from sqlglot import exp
 from .base import BaseQueryValidator
-from ..schema.sql.enums import Access
+from ..schema.sql.enums import Access, Operation
 from ..exceptions.errors import ColumnAccessError
 
 
@@ -23,14 +23,81 @@ class ColumnValidator(BaseQueryValidator):
                 aliases[table.alias.lower()] = table.name.lower()
         return aliases
 
+    def _get_column_operations(
+        self, column: exp.Column, parsed: exp.Expression
+    ) -> Set[str]:
+        """
+        Determine all operations being performed on a column, including in nested queries.
+        Returns a set of operations (SELECT, UPDATE, INSERT, DELETE).
+        """
+        operations = set()
+        current_node = column
+
+        # First, check if we're in a DELETE context
+        delete_node = parsed.find(exp.Delete)
+        if delete_node:
+            # For DELETE queries, we need both DELETE and SELECT permissions
+            operations.add(Operation.DELETE)
+            operations.add(Operation.SELECT)  # For WHERE clause evaluation
+
+        # Traverse up the tree to find all relevant operations
+        while current_node:
+            if isinstance(current_node, (exp.Select, exp.Subquery)):
+                operations.add(Operation.SELECT)
+            elif isinstance(current_node, exp.Update):
+                if hasattr(current_node, "expressions"):
+                    for expr in current_node.expressions:
+                        if (
+                            isinstance(expr, exp.EQ)
+                            and isinstance(expr.left, exp.Column)
+                            and expr.left.name.lower() == column.name.lower()
+                        ):
+                            operations.add(Operation.UPDATE)
+                            break
+                operations.add(Operation.SELECT)
+            elif isinstance(current_node, exp.Insert):
+                if hasattr(current_node, "expressions"):
+                    for col in current_node.expressions:
+                        if (
+                            isinstance(col, exp.Column)
+                            and col.name.lower() == column.name.lower()
+                        ):
+                            operations.add(Operation.INSERT)
+                            break
+                if current_node.find(exp.Select):
+                    operations.add(Operation.SELECT)
+
+            current_node = current_node.parent
+
+        return operations
+
     def validate(self, parsed: exp.Expression) -> None:
         aliases = self._get_table_aliases(parsed)
-        column_access = self._get_columns_to_access(parsed)
+        write_columns = self._get_write_columns(parsed, aliases)
+
+        # Special handling for DELETE operations
+        if parsed.find(exp.Delete):
+            table_name = None
+            delete_node = parsed.find(exp.Delete)
+            if hasattr(delete_node, "this") and isinstance(delete_node.this, exp.Table):  # type: ignore
+                table_name = delete_node.this.name.lower()  # type: ignore
+
+                # Check if any column in the table has DELETE permission
+                table_schema = self.schema.tables.get(table_name)
+                if table_schema:
+                    has_delete_permission = False
+                    for _, col_schema in table_schema.columns.items():
+                        if Operation.DELETE in col_schema.allowed_operations:
+                            has_delete_permission = True
+                            break
+                    if not has_delete_permission:
+                        raise ColumnAccessError(
+                            f"DELETE operation not allowed on table '{table_name}'"
+                        )
 
         for column in parsed.find_all(exp.Column):
             table_name = None
             if column.table:
-                # If column has a table reference, try to resolve alias
                 table_name = aliases.get(column.table.lower()) or column.table.lower()
             else:
                 table_name = self._get_default_table(parsed, column)
@@ -41,162 +108,84 @@ class ColumnValidator(BaseQueryValidator):
             column_name = str(column.name).lower()
             column_rule = self.schema.get_column_schema(table_name, column_name)
 
-            # Check if column exists in schema
+            # Check if column exists and has access
             if column_rule.access == Access.DENIED:
                 raise ColumnAccessError(
-                    f"Column '{column_name}' not found in table '{table_name}' schema"
+                    f"Access denied for column '{column_name}' in table '{table_name}'"
                 )
 
-            # Check column access (read/write)
+            # Get all operations being performed on this column
+            column_operations = self._get_column_operations(column, parsed)
+
+            # Check if all operations are allowed for this column
+            for operation in column_operations:
+                if operation not in column_rule.allowed_operations:
+                    raise ColumnAccessError(
+                        f"Operation {operation} not allowed for column '{column_name}' in table '{table_name}'. "
+                        f"Allowed operations: {', '.join(column_rule.allowed_operations)}"
+                    )
+
+            # Check if column is being written to and only has READ access
             col_id = f"{table_name}.{column_name}"
-            required_access = column_access.get(col_id)
-
-            if required_access is None:
-                continue
-
-            if not column_rule.access:
-                continue
-
-            # If write access is required but column only has read access
-            if required_access == Access.WRITE and column_rule.access == Access.READ:
+            if col_id in write_columns and column_rule.access == Access.READ:
                 raise ColumnAccessError(
                     f"Write access denied for column '{column_name}' in table '{table_name}'. "
                     f"Column only has read access."
                 )
 
-    def _get_columns_to_access(self, parsed: exp.Expression) -> Dict[str, Access]:
-        """
-        Parse the query recursively to find all columns to access and figure out the access type.
+    def _get_write_columns(
+        self, parsed: exp.Expression, aliases: Dict[str, str]
+    ) -> Set[str]:
+        """Get set of columns that are being written to."""
+        write_columns = set()
 
-        Args:
-            parsed: The parsed SQL expression
+        def add_write_column(
+            column: exp.Column, table_context: Optional[str] = None
+        ) -> None:
+            """Helper to add column to write set."""
+            table_name = None
+            if column.table:
+                table_name = aliases.get(column.table.lower()) or column.table.lower()
+            elif table_context:
+                table_name = table_context
+            else:
+                table_name = self._get_default_table(parsed, column)
 
-        Returns:
-            Dictionary mapping column identifiers to their access types
-        """
-        access_map: Dict[str, Access] = {}
+            if table_name:
+                col_id = f"{table_name}.{column.name.lower()}"
+                write_columns.add(col_id)
 
-        def add_column_access(column: exp.Column, access: Access) -> None:
-            """Helper to add column access to the map."""
-            # Create a unique identifier for the column
-            col_id = f"{column.table}.{column.name}" if column.table else column.name
+        # Handle UPDATE SET clause
+        for update in parsed.find_all(exp.Update):
+            table_context = (
+                update.this.name if isinstance(update.this, exp.Table) else None
+            )
+            if hasattr(update, "expressions"):
+                for expr in update.expressions:
+                    if isinstance(expr, exp.EQ) and isinstance(expr.left, exp.Column):
+                        add_write_column(expr.left, table_context)
 
-            # Only upgrade to WRITE if it's currently READ
-            if col_id not in access_map or access_map[col_id] == Access.READ:
-                access_map[col_id] = access
-
-        def process_node(node: exp.Expression) -> None:
-            """Recursively process nodes to determine column access."""
-
-            # Handle INSERT statements
-            if isinstance(node, exp.Insert):
-                # Columns being inserted into have WRITE access
-                for col in node.args.get("expressions", []):
+        # Handle INSERT columns
+        for insert in parsed.find_all(exp.Insert):
+            table_context = (
+                insert.this.name if isinstance(insert.this, exp.Table) else None
+            )
+            if hasattr(insert, "expressions"):
+                for col in insert.expressions:
                     if isinstance(col, exp.Column):
-                        add_column_access(col, Access.WRITE)
+                        add_write_column(col, table_context)
 
-                # Process values for any column references
-                if node.expression:
-                    process_node(node.expression)
+        # Handle DELETE - gets all columns from the target table used in the query
+        for delete in parsed.find_all(exp.Delete):
+            table_context = (
+                delete.this.name if isinstance(delete.this, exp.Table) else None
+            )
+            if table_context:
+                for column in delete.find_all(exp.Column):
+                    if (
+                        not column.table
+                        or column.table.lower() == table_context.lower()
+                    ):
+                        add_write_column(column, table_context)
 
-            # Handle UPDATE statements
-            elif isinstance(node, exp.Update):
-                # Columns being updated have WRITE access
-                for assignment in node.expressions:
-                    if isinstance(assignment, exp.EQ):
-                        if isinstance(assignment.left, exp.Column):
-                            add_column_access(assignment.left, Access.WRITE)
-                        if isinstance(assignment.right, exp.Column):
-                            add_column_access(assignment.right, Access.READ)
-
-                # Process WHERE clause
-                if node.this:
-                    process_node(node.this)
-
-            # Handle DELETE statements
-            elif isinstance(node, exp.Delete):
-                # Mark all columns from the target table as WRITE
-                table_name = (
-                    node.this.name if isinstance(node.this, exp.Table) else None
-                )
-                if table_name:
-                    # Mark primary key or identifying columns as WRITE
-                    # In a DELETE operation, we're effectively writing to all columns
-                    for column in parsed.find_all(exp.Column):
-                        if column.table and column.table.lower() == table_name.lower():
-                            add_column_access(column, Access.WRITE)
-
-                # Process WHERE clause columns as READ
-                if node.expression:
-                    process_node(node.expression)
-
-            # Handle SELECT statements
-            elif isinstance(node, exp.Select):
-                # Process selected columns
-                for expr in node.expressions:
-                    if isinstance(expr, exp.Column):
-                        add_column_access(expr, Access.READ)
-                    elif isinstance(expr, exp.Alias):
-                        if isinstance(expr.this, exp.Column):
-                            add_column_access(expr.this, Access.READ)
-
-                # Process WHERE clause
-                if node.this:
-                    process_node(node.this)
-
-                # Process GROUP BY
-                for group_expr in node.find_all(exp.Group):
-                    for expr in group_expr.expressions:
-                        if isinstance(expr, exp.Column):
-                            add_column_access(expr, Access.READ)
-
-                # Process HAVING
-                for having_expr in node.find_all(exp.Having):
-                    process_conditions(having_expr.this)
-
-                # Process ORDER BY
-                for order_expr in node.find_all(exp.Order):
-                    for expr in order_expr.expressions:
-                        if isinstance(expr, exp.Column):
-                            add_column_access(expr, Access.READ)
-
-            # Handle WHERE conditions
-            elif isinstance(node, exp.Where):
-                process_conditions(node.this)
-
-        def process_conditions(condition: exp.Expression) -> None:
-            """Process WHERE/HAVING conditions to track column access."""
-            if isinstance(condition, exp.Binary):
-                if isinstance(condition.left, exp.Column):
-                    add_column_access(condition.left, Access.READ)
-                elif isinstance(condition.left, exp.Expression):
-                    process_conditions(condition.left)
-
-                if isinstance(condition.right, exp.Column):
-                    add_column_access(condition.right, Access.READ)
-                elif isinstance(condition.right, exp.Expression):
-                    process_conditions(condition.right)
-
-            elif isinstance(condition, exp.In):
-                if isinstance(condition.this, exp.Column):
-                    add_column_access(condition.this, Access.READ)
-                if hasattr(condition, "expressions"):
-                    for expr in condition.expressions:
-                        if isinstance(expr, exp.Column):
-                            add_column_access(expr, Access.READ)
-
-            elif isinstance(condition, exp.Between):
-                if isinstance(condition.this, exp.Column):
-                    add_column_access(condition.this, Access.READ)
-
-            elif isinstance(condition, (exp.And, exp.Or)):
-                process_conditions(condition.left)
-                process_conditions(condition.right)
-
-            elif isinstance(condition, exp.Column):
-                add_column_access(condition, Access.READ)
-
-        # Start processing from the root node
-        process_node(parsed)
-
-        return access_map
+        return write_columns
