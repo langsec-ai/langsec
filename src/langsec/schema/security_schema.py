@@ -4,20 +4,13 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from .sql import JoinRule
 
-from .sql.enums import AggregationType, QueryType
-
-
-class ColumnAccess(str, Enum):
-    READ = "read"
-    WRITE = "write"
-    DENIED = "denied"
+from .sql.enums import AggregationType, Access
 
 
 # TODO: Move to SQL
 class ColumnSchema(BaseModel):
-    access: Optional[ColumnAccess] = None
-    max_rows: Optional[int] = None
-    allowed_operations: Optional[Set[str]] = Field(default_factory=set)
+    access: Optional[Access] = Access.DENIED
+    allowed_operations: Optional[Set[str]] = Field(default_factory=set) # TODO: Implement.
     allowed_aggregations: Optional[Set[AggregationType]] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
@@ -26,12 +19,7 @@ class ColumnSchema(BaseModel):
 # TODO: Move to SQL
 class TableSchema(BaseModel):
     columns: Dict[str, ColumnSchema] = Field(default_factory=dict)
-    max_rows: Optional[int] = None  # TODO: implement.
     allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
-    require_where_clause: bool = False
-    allowed_where_columns: Set[str] = Field(default_factory=set)
-    allow_group_by: bool = True
-    allowed_group_by_columns: Set[str] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
@@ -50,7 +38,6 @@ class SecuritySchema(BaseModel):
     tables: Dict[str, TableSchema] = Field(default_factory=dict)
     max_joins: int = 3
     allow_subqueries: bool = True
-    allow_unions: bool = False
     allow_temp_tables: bool = False
     max_query_length: Optional[int] = None
     sql_injection_protection: bool = True
@@ -67,15 +54,11 @@ class SecuritySchema(BaseModel):
             "DBADMIN",
         }
     )
-    allowed_query_types: Set[QueryType] = Field(
-        default_factory=lambda: {
-            QueryType.SELECT
-        }  # Default to only allowing SELECT queries
-    )
+    access: Optional[Access] = None # TODO: implement.
     
     # Declare default values for unspecified tables and columns
-    default_table_security_schema: Optional[TableSchema] = None
-    default_column_security_schema: Optional[ColumnSchema] = None
+    default_table_security_schema: TableSchema = TableSchema()
+    default_column_security_schema: ColumnSchema = ColumnSchema()
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
@@ -83,12 +66,10 @@ class SecuritySchema(BaseModel):
         prompt = "Generate an SQL query adhering to the following constraints:\n"
         prompt += f"- Maximum joins allowed: {self.max_joins}\n"
         prompt += f"- Subqueries allowed: {'Yes' if self.allow_subqueries else 'No'}\n"
-        prompt += f"- Unions allowed: {'Yes' if self.allow_unions else 'No'}\n"
         prompt += f"- Temporary tables allowed: {'Yes' if self.allow_temp_tables else 'No'}\n"
         prompt += f"- Maximum query length: {self.max_query_length if self.max_query_length else 'Unlimited'}\n"
         prompt += f"- SQL Injection Protection: {'Enabled' if self.sql_injection_protection else 'Disabled'}\n"
         prompt += f"- Forbidden keywords: {', '.join(self.forbidden_keywords)}\n"
-        prompt += f"- Allowed query types: {', '.join(qt.value for qt in self.allowed_query_types)}\n"
         return prompt
 
     def get_table_schema(self, table_name: str) -> TableSchema:
@@ -113,12 +94,4 @@ class SecuritySchema(BaseModel):
                 k: v[k] if isinstance(v[k], TableSchema) else TableSchema(**v[k])
                 for k in v
             }
-        return v
-
-    @field_validator("allowed_query_types", mode="before")
-    @classmethod
-    def ensure_query_types(cls, v):
-        """Ensures query types are properly instantiated."""
-        if isinstance(v, set):
-            return {QueryType(qt) if isinstance(qt, str) else qt for qt in v}
         return v

@@ -1,1 +1,1 @@
-from .security_schema import SecuritySchema, TableSchema, ColumnSchema, JoinRule, ColumnAccess
+from .security_schema import SecuritySchema, TableSchema, ColumnSchema, JoinRule, Access

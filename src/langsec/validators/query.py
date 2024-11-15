@@ -9,10 +9,7 @@ from .table import TableValidator
 from .column import ColumnValidator
 from .join import JoinValidator
 from .aggregation import AggregationValidator
-from .group_by import GroupByValidator
-from .where import WhereValidator
 from .subquery import SubqueryValidator
-from .type import QueryTypeValidator
 from .injection import SQLInjectionValidator
 
 
@@ -27,12 +24,9 @@ class QueryValidator:
 
         # Initialize all validators
         self.table_validator = TableValidator(schema)
-        self.query_type_validator = QueryTypeValidator(schema)
         self.join_validator = JoinValidator(schema)
         self.column_validator = ColumnValidator(schema)
-        self.where_validator = WhereValidator(schema)
         self.aggregation_validator = AggregationValidator(schema)
-        self.group_by_validator = GroupByValidator(schema)
         self.subqueries_validator = SubqueryValidator(schema)
 
         if self.schema.sql_injection_protection:
@@ -47,12 +41,9 @@ class QueryValidator:
 
         # Run all validators
         self.table_validator.validate(parsed)
-        self.query_type_validator.validate(parsed)
         self.join_validator.validate(parsed)
         self.column_validator.validate(parsed)
-        self.where_validator.validate(parsed)
         self.aggregation_validator.validate(parsed)
-        self.group_by_validator.validate(parsed)
         self.subqueries_validator.validate(parsed)
 
         if self.schema.sql_injection_protection:

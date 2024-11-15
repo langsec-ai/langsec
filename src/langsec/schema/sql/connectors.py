@@ -25,6 +25,8 @@ def _parse_sql_ddl(schema: SecuritySchema, connection: sqlite3.Connection) -> Se
 
         schema.tables[table_name.lower()] = table_schema
 
+    return schema
+
 
 def sql_security_schema(config: LangSecConfig, connection: sqlite3.Connection) -> SecuritySchema:
     schema = SecuritySchema()

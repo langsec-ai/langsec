@@ -1,2 +1,2 @@
-from .enums import AggregationType, JoinType, QueryType
+from .enums import AggregationType, JoinType
 from .operations import JoinRule
