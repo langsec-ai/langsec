@@ -40,10 +40,7 @@ class TableSchema(BaseModel):
         if not isinstance(v, dict):
             return {}
 
-        return {
-            k: v[k] if isinstance(v[k], set) else set(v[k] or [])
-            for k in v
-        }
+        return {k: v[k] if isinstance(v[k], set) else set(v[k] or []) for k in v}
 
     @field_validator("default_allowed_join", mode="before")
     @classmethod
@@ -70,7 +67,7 @@ class SecuritySchema(BaseModel):
     tables: Dict[str, TableSchema] = Field(default_factory=dict)
     max_joins: int = Field(default=3, ge=0)
     allow_subqueries: bool = True
-    allow_temp_tables: bool = False # TODO: Implement temp tables
+    allow_temp_tables: bool = False  # TODO: Implement temp tables
     max_query_length: Optional[int] = Field(default=None, ge=0)
     sql_injection_protection: bool = True
     forbidden_keywords: Set[str] = Field(

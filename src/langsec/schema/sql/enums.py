@@ -21,7 +21,7 @@ class Access(str, Enum):
     READ = "read"
     WRITE = "write"
     DENIED = "denied"
-    
+
 
 class QueryType(str, Enum):
     SELECT = "SELECT"
