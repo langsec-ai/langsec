@@ -65,6 +65,11 @@ class TableSchema(BaseModel):
         return cls(**valid_fields)
 
 
+def instantiate_class_with_kwargs(cls, kwargs):
+        class_args = {key: kwargs.get(key) for key in cls.__annotations__.keys() if kwargs.get(key) is not None}
+        return cls(**class_args) if class_args else None
+
+
 class SecuritySchema(BaseModel):
     """Schema defining overall security rules for database access."""
 
@@ -96,6 +101,16 @@ class SecuritySchema(BaseModel):
     default_column_security_schema: ColumnSchema = Field(default_factory=ColumnSchema)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize default_column_security_schema only if needed.
+        # Only if any of the kwargs are needed.
+        if self.default_column_security_schema is None:
+            self.default_column_security_schema = instantiate_class_with_kwargs(ColumnSchema, kwargs)
+            
+        if self.default_table_security_schema is None:
+            self.default_table_security_schema = instantiate_class_with_kwargs(TableSchema, kwargs)
 
     def __init__(self, **data):
         # Initialize default schemas before parent initialization
