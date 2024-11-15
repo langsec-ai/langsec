@@ -2,14 +2,14 @@ from typing import Dict, Optional, Set, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from .sql.operations import JoinRule
-from .sql.enums import AggregationType, Access
+from .sql.enums import AggregationType, Access, JoinType, QueryType
 
 
 class ColumnSchema(BaseModel):
     """Schema defining security rules for a database column."""
 
     access: Access = Field(default=Access.DENIED)
-    allowed_operations: Set[str] = Field(default_factory=set)
+    allowed_operations: Set[QueryType] = Field(default_factory=set)
     allowed_aggregations: Set[AggregationType] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
@@ -25,8 +25,8 @@ class TableSchema(BaseModel):
     """Schema defining security rules for a database table."""
 
     columns: Dict[str, ColumnSchema] = Field(default_factory=dict)
-    allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
-    default_allowed_join: Optional[JoinRule] = Field(default_factory=JoinRule)
+    allowed_joins: Dict[str, Set[JoinType]] = Field(default_factory=dict)
+    default_allowed_join: Optional[Set[JoinType]] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
@@ -42,7 +42,7 @@ class TableSchema(BaseModel):
             return {}
 
         return {
-            k: v[k] if isinstance(v[k], JoinRule) else JoinRule(**(v[k] or {}))
+            k: v[k] if isinstance(v[k], set) else (v[k] or {})
             for k in v
         }
 

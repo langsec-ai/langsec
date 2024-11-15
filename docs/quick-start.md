@@ -54,7 +54,7 @@ schema = SecuritySchema(
             max_rows=1000,
             require_where_clause=True,
             allowed_joins={
-                "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
+                "orders": {JoinType.INNER, JoinType.LEFT}
             },
         ),
         "orders": TableSchema(
