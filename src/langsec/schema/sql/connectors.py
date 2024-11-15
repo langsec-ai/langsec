@@ -5,7 +5,9 @@ from ...config import LangSecConfig
 from ..security_schema import SecuritySchema
 
 
-def _parse_sql_ddl(schema: SecuritySchema, connection: sqlite3.Connection) -> SecuritySchema:
+def _parse_sql_ddl(
+    schema: SecuritySchema, connection: sqlite3.Connection
+) -> SecuritySchema:
     from ..security_schema import ColumnSchema, TableSchema
 
     cursor = connection.cursor()
@@ -28,7 +30,9 @@ def _parse_sql_ddl(schema: SecuritySchema, connection: sqlite3.Connection) -> Se
     return schema
 
 
-def sql_security_schema(config: LangSecConfig, connection: sqlite3.Connection) -> SecuritySchema:
+def sql_security_schema(
+    config: LangSecConfig, connection: sqlite3.Connection
+) -> SecuritySchema:
     schema = SecuritySchema()
     _parse_sql_ddl(schema, connection)
     # TODO: Apply config here

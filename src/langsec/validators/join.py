@@ -2,7 +2,7 @@ from typing import Dict, Tuple, Optional
 from sqlglot import exp
 from .base import BaseQueryValidator
 from ..schema.sql.enums import JoinType
-from ..exceptions.errors import AllowedJoinNotDefinedViolationError, JoinViolationError
+from ..exceptions.errors import JoinViolationError
 
 
 class JoinValidator(BaseQueryValidator):
@@ -60,7 +60,10 @@ class JoinValidator(BaseQueryValidator):
 
         # Handle RIGHT JOIN by checking if equivalent LEFT JOIN is allowed in reverse direction
         elif join_type == JoinType.RIGHT:
-            if not right_join_rule or JoinType.LEFT not in right_join_rule.allowed_types:
+            if (
+                not right_join_rule
+                or JoinType.LEFT not in right_join_rule.allowed_types
+            ):
                 raise JoinViolationError(
                     f"RIGHT JOIN from {left_table} to {right_table} is not allowed as {right_table} "
                     f"does not allow LEFT JOIN with {left_table}"
@@ -71,8 +74,11 @@ class JoinValidator(BaseQueryValidator):
                 raise JoinViolationError(
                     f"CROSS JOIN between {left_table} and {right_table} is not allowed"
                 )
-            if JoinType.CROSS not in (left_join_rule.allowed_types if left_join_rule else set()) and \
-               JoinType.CROSS not in (right_join_rule.allowed_types if right_join_rule else set()):
+            if JoinType.CROSS not in (
+                left_join_rule.allowed_types if left_join_rule else set()
+            ) and JoinType.CROSS not in (
+                right_join_rule.allowed_types if right_join_rule else set()
+            ):
                 raise JoinViolationError(
                     f"CROSS JOIN not allowed between {left_table} and {right_table}"
                 )
@@ -118,13 +124,13 @@ class JoinValidator(BaseQueryValidator):
         return left_table, right_table
 
     def _get_join_type(self, join: exp.Join) -> JoinType:
-        """Determines the type of join from the sqlglot Join expression.""" 
+        """Determines the type of join from the sqlglot Join expression."""
         if join.kind == "CROSS":
             return JoinType.CROSS
-        
+
         if not join.side:
             return JoinType.INNER
-        
+
         join_side = join.side.upper()
         if join_side == "RIGHT":
             return JoinType.RIGHT
@@ -132,5 +138,5 @@ class JoinValidator(BaseQueryValidator):
             return JoinType.LEFT
         elif join_side in ("FULL", "OUTER"):  # Handle both FULL and OUTER as FULL
             return JoinType.FULL
-        
+
         return JoinType.INNER

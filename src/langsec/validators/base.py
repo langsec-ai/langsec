@@ -19,10 +19,10 @@ class BaseQueryValidator(ABC):
         # Sometimes we can get the table name straight from the expression
         if parsed.parent_select is not None:
             parent_select = parsed.parent_select
-            from_exp: exp.From = parent_select.args['from']
+            from_exp: exp.From = parent_select.args["from"]
             table: exp.Table = from_exp.this
             return table.name.lower()
-    
+
         # If we are unable to get the table name from the expression, use the column to find it
         if column_hint is None:
             return None
@@ -41,5 +41,3 @@ class BaseQueryValidator(ABC):
             return str(tables[0].name).lower()
 
         return None
-        
-       

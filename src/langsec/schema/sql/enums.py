@@ -16,6 +16,7 @@ class JoinType(str, Enum):
     FULL = "full"
     CROSS = "cross"
 
+
 class Access(str, Enum):
     READ = "read"
     WRITE = "write"
