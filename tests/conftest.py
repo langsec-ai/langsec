@@ -35,6 +35,11 @@ def security_schema_allow_all():
     )
 
 @pytest.fixture
+def security_guard_allow_all(security_schema_allow_all):
+    """Provides a security guard with default table and column security schemas."""
+    return SQLSecurityGuard(security_schema_allow_all)
+
+@pytest.fixture
 def security_guard_deny_AVG():
     """Provides a security guard that denies AVG aggregations."""
     default_table_schema = TableSchema(

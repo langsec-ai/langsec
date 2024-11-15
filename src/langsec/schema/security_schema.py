@@ -88,7 +88,6 @@ class SecuritySchema(BaseModel):
             "DBADMIN",
         }
     )
-    # Add these fields to match the configuration use case
     access: Optional[Access] = Field(default=None)
     allowed_operations: Optional[Set[str]] = Field(default=None)
     allowed_aggregations: Optional[Set[AggregationType]] = Field(default=None)
@@ -99,28 +98,34 @@ class SecuritySchema(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
     
-    @model_validator(mode='after')
-    def initialize_default_schemas(self) -> 'SecuritySchema':
-        """Initialize default schemas with any relevant fields from the main config."""
-        # Extract fields that could apply to column schema
+    def __init__(self, **data):
+        # Initialize default schemas before parent initialization
         column_fields = {
-            'access': self.access,
-            'allowed_operations': self.allowed_operations,
-            'allowed_aggregations': self.allowed_aggregations
+            'access': data.get('access'),
+            'allowed_operations': data.get('allowed_operations'),
+            'allowed_aggregations': data.get('allowed_aggregations')
         }
         # Only include non-None values
         column_fields = {k: v for k, v in column_fields.items() if v is not None}
-        self.default_column_security_schema = ColumnSchema.create_default(**column_fields)
-
-        # Extract fields that could apply to table schema
-        table_fields = {
-            'columns': {},  # Empty default columns
-            'allowed_joins': {},  # Empty default joins
-            'default_allowed_join': JoinRule() if self.allowed_operations and "JOIN" in self.allowed_operations else None
-        }
-        self.default_table_security_schema = TableSchema.create_default(**table_fields)
         
-        return self
+        # Create default schemas
+        if 'default_column_security_schema' not in data:
+            data['default_column_security_schema'] = ColumnSchema(**column_fields)
+            
+        if 'default_table_security_schema' not in data:
+            table_fields = {
+                'columns': {},  # Empty default columns
+                'allowed_joins': {},  # Empty default joins
+                'default_allowed_join': (
+                    JoinRule() 
+                    if column_fields.get('allowed_operations') and 
+                    "JOIN" in column_fields['allowed_operations'] 
+                    else None
+                )
+            }
+            data['default_table_security_schema'] = TableSchema(**table_fields)
+            
+        super().__init__(**data)
 
     def get_prompt(self) -> str:
         """Generate a prompt describing the security constraints."""
