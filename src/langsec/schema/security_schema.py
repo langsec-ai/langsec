@@ -1,15 +1,14 @@
 from typing import Dict, Optional, Set, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from .sql.operations import JoinRule
-from .sql.enums import AggregationType, Access
+from .sql.enums import AggregationType, Access, JoinType, QueryType
 
 
 class ColumnSchema(BaseModel):
     """Schema defining security rules for a database column."""
 
     access: Access = Field(default=Access.DENIED)
-    allowed_operations: Set[str] = Field(default_factory=set)
+    allowed_operations: Set[QueryType] = Field(default_factory=set)
     allowed_aggregations: Set[AggregationType] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
@@ -25,44 +24,49 @@ class TableSchema(BaseModel):
     """Schema defining security rules for a database table."""
 
     columns: Dict[str, ColumnSchema] = Field(default_factory=dict)
-    allowed_joins: Dict[str, JoinRule] = Field(default_factory=dict)
-    default_allowed_join: Optional[JoinRule] = Field(default_factory=JoinRule)
+    allowed_joins: Dict[str, Set[JoinType]] = Field(default_factory=dict)
+    default_allowed_join: Optional[Set[JoinType]] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
-    def get_table_allowed_joins(self, column: str) -> JoinRule:
+    def get_table_allowed_joins(self, column: str) -> Set[JoinType]:
         """Get join rules for a column, returning default JoinRule if none specified."""
-        return self.allowed_joins.get(column, self.default_allowed_join or JoinRule())
+        return self.allowed_joins.get(column, self.default_allowed_join or {})
 
     @field_validator("allowed_joins", mode="before")
     @classmethod
-    def ensure_join_rules(cls, v: Optional[Dict]) -> Dict[str, JoinRule]:
+    def ensure_join_rules(cls, v: Optional[Dict]) -> Dict[str, Set[JoinType]]:
         """Ensures join rules are properly instantiated."""
         if not isinstance(v, dict):
             return {}
 
         return {
-            k: v[k] if isinstance(v[k], JoinRule) else JoinRule(**(v[k] or {}))
+            k: v[k] if isinstance(v[k], set) else (v[k] or {})
             for k in v
         }
 
     @field_validator("default_allowed_join", mode="before")
     @classmethod
     def ensure_default_join_rule(
-        cls, v: Optional[Union[Dict, JoinRule]]
-    ) -> Optional[JoinRule]:
+        cls, v: Optional[Union[Dict, Set[JoinType]]]
+    ) -> Optional[Set[JoinType]]:
         """Ensures default join rule is properly instantiated."""
         if v is None:
             return None
-        if isinstance(v, JoinRule):
+        if isinstance(v, set):
             return v
-        return JoinRule(**(v or {}))
+        return (v or {})
 
     @classmethod
     def create_default(cls, **kwargs) -> "TableSchema":
         """Create a default table schema with optional overrides."""
         valid_fields = {k: v for k, v in kwargs.items() if k in cls.model_fields}
         return cls(**valid_fields)
+
+
+def instantiate_class_with_kwargs(cls, kwargs):
+        class_args = {key: kwargs.get(key) for key in cls.__annotations__.keys() if kwargs.get(key) is not None}
+        return cls(**class_args) if class_args else None
 
 
 class SecuritySchema(BaseModel):
@@ -96,6 +100,16 @@ class SecuritySchema(BaseModel):
     default_column_security_schema: ColumnSchema = Field(default_factory=ColumnSchema)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize default_column_security_schema only if needed.
+        # Only if any of the kwargs are needed.
+        if self.default_column_security_schema is None:
+            self.default_column_security_schema = instantiate_class_with_kwargs(ColumnSchema, kwargs)
+            
+        if self.default_table_security_schema is None:
+            self.default_table_security_schema = instantiate_class_with_kwargs(TableSchema, kwargs)
 
     def __init__(self, **data):
         # Initialize default schemas before parent initialization
@@ -116,7 +130,7 @@ class SecuritySchema(BaseModel):
                 "columns": {},  # Empty default columns
                 "allowed_joins": {},  # Empty default joins
                 "default_allowed_join": (
-                    JoinRule()
+                    {}
                     if column_fields.get("allowed_operations")
                     and "JOIN" in column_fields["allowed_operations"]
                     else None
