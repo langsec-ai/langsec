@@ -5,9 +5,6 @@ low_security_config = SecuritySchema(
     allow_subqueries=True,
     allow_temp_tables=False,
     max_query_length=1000,
-    # Table access parameters
-    require_where_clause=False,
-    allow_group_by=True,
     # Column access parameters
     access=Access.READ,
     allowed_operations={
@@ -37,9 +34,6 @@ medium_security_config = SecuritySchema(
     allow_subqueries=False,
     allow_temp_tables=False,
     max_query_length=500,
-    # Table access parameters
-    require_where_clause=True,
-    allow_group_by=True,
     # Column access parameters
     access=Access.READ,
     allowed_operations={Operation.SELECT, Operation.JOIN},
@@ -51,9 +45,6 @@ high_security_config = SecuritySchema(
     allow_subqueries=False,
     allow_temp_tables=False,
     max_query_length=200,
-    # Table access parameters
-    require_where_clause=True,
-    allow_group_by=False,
     # Column access parameters
     access=Access.READ,
     allowed_operations={Operation.SELECT},
