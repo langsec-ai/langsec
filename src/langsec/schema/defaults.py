@@ -1,4 +1,4 @@
-from .sql.enums import AggregationType, QueryType, JoinType
+from .sql.enums import AggregationType, Operation, JoinType
 from .security_schema import SecuritySchema, Access
 
 low_security_config = SecuritySchema(
@@ -11,12 +11,12 @@ low_security_config = SecuritySchema(
     # Column access parameters
     access=Access.READ,
     allowed_operations={
-        QueryType.SELECT,
-        QueryType.JOIN,
-        QueryType.GROUPBY,
-        QueryType.INSERT,
-        QueryType.UPDATE,
-        QueryType.DELETE,
+        Operation.SELECT,
+        Operation.JOIN,
+        Operation.GROUPBY,
+        Operation.INSERT,
+        Operation.UPDATE,
+        Operation.DELETE,
     },
     default_allowed_join={
         JoinType.CROSS,
@@ -42,7 +42,7 @@ medium_security_config = SecuritySchema(
     allow_group_by=True,
     # Column access parameters
     access=Access.READ,
-    allowed_operations={QueryType.SELECT, QueryType.JOIN},
+    allowed_operations={Operation.SELECT, Operation.JOIN},
     default_allowed_join={JoinType.RIGHT, JoinType.LEFT},
     allowed_aggregations={AggregationType.SUM, AggregationType.AVG},
 )
@@ -56,7 +56,7 @@ high_security_config = SecuritySchema(
     allow_group_by=False,
     # Column access parameters
     access=Access.READ,
-    allowed_operations={QueryType.SELECT},
+    allowed_operations={Operation.SELECT},
     default_allowed_join={JoinType.LEFT},
     allowed_aggregations=set(),
 )

@@ -23,7 +23,7 @@ class Access(str, Enum):
     DENIED = "denied"
 
 
-class QueryType(str, Enum):
+class Operation(str, Enum):
     SELECT = "SELECT"
     JOIN = "JOIN"
     GROUPBY = "GROUPBY"
