@@ -14,6 +14,10 @@ class JoinViolationError(LangSecError):
     """Raised when join operations violate security rules."""
 
 
+class AllowedJoinNotDefinedViolationError(LangSecError):
+    """Raised when join operations violate security rules."""
+
+
 class QueryComplexityError(LangSecError):
     """Raised when query exceeds complexity limits."""
 

@@ -72,7 +72,6 @@ schema = SecuritySchema(
                 "email": ColumnSchema(access=ColumnAccess.DENIED),
                 "created_at": ColumnSchema(access=ColumnAccess.READ),
             },
-            max_rows=1000,
             require_where_clause=True,
             allowed_joins={
                 "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})

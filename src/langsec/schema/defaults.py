@@ -5,36 +5,26 @@ low_security_config = SecuritySchema(
     allow_subqueries=True,
     allow_temp_tables=False,
     max_query_length=1000,
-    default_table_security_schema=TableSchema(),
-    default_column_security_schema=ColumnSchema(
-        access=Access.READ,
-        allowed_operations={"SELECT"},
-        allowed_aggregations={AggregationType.SUM, AggregationType.AVG, AggregationType.COUNT, AggregationType.MAX, AggregationType.MIN}
-    )
+    access=Access.READ,
+    allowed_operations={"SELECT", "JOIN", "GROUP BY", "INSERT", "UPDATE", "DELETE"},
+    allowed_aggregations={AggregationType.SUM, AggregationType.AVG, AggregationType.COUNT, AggregationType.MAX, AggregationType.MIN}
 )
 
 medium_security_config = SecuritySchema(
     allow_subqueries=False,
     allow_temp_tables=False,
     max_query_length=500,
-    default_table_security_schema=TableSchema(
-    ),
-    default_column_security_schema=ColumnSchema(
-        access=Access.READ,
-        allowed_operations={"SELECT"},
-        allowed_aggregations={AggregationType.SUM, AggregationType.AVG}
-    )
+    # Column parameters
+    access=Access.READ,
+    allowed_operations={"SELECT", "JOIN"},
+    allowed_aggregations={AggregationType.SUM, AggregationType.AVG}
 )
 
 high_security_config = SecuritySchema(
     allow_subqueries=False,
     allow_temp_tables=False,
     max_query_length=200,
-    default_table_security_schema=TableSchema(
-    ),
-    default_column_security_schema=ColumnSchema(
-        access=Access.READ,
-        allowed_operations=set(),
-        allowed_aggregations=set()
-    )
+    access=Access.READ,
+    allowed_operations={"SELECT"},
+    allowed_aggregations=set()
 )

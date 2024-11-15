@@ -1,4 +1,5 @@
 from sqlglot import exp
+from sqlglot.expressions import AggFunc
 from .base import BaseQueryValidator
 from ..schema.sql.enums import AggregationType
 from ..exceptions.errors import QueryComplexityError
@@ -7,8 +8,8 @@ from ..exceptions.errors import QueryComplexityError
 class AggregationValidator(BaseQueryValidator):
     def validate(self, parsed: exp.Expression) -> None:
         """Validates aggregation functions against schema rules."""
-        # TODO: There might be more aggregations that exist.
-        for agg in parsed.find_all(exp.Max, exp.Min, exp.Sum, exp.Avg, exp.Count):
+        all_aggregations = AggFunc.__subclasses__()
+        for agg in parsed.find_all(*all_aggregations):
             for column in agg.find_all(exp.Column):
                 table_name = column.table or self._get_default_table(agg, column)
                 if not table_name:

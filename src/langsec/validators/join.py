@@ -2,15 +2,12 @@ from typing import Dict, Tuple, Optional
 from sqlglot import exp
 from .base import BaseQueryValidator
 from ..schema.sql.enums import JoinType
-from ..exceptions.errors import JoinViolationError
+from ..exceptions.errors import AllowedJoinNotDefinedViolationError, JoinViolationError
 
 
 class JoinValidator(BaseQueryValidator):
     def validate(self, parsed: exp.Expression) -> None:
         """Validates all JOIN operations in the query."""
-        if not self.schema.tables:
-            return
-
         aliases = self._collect_table_aliases(parsed)
         joins = list(parsed.find_all(exp.Join))
 
@@ -38,16 +35,16 @@ class JoinValidator(BaseQueryValidator):
         left_schema = self.schema.get_table_schema(left_table)
         right_schema = self.schema.get_table_schema(right_table)
 
-        if not left_schema or not left_schema.allowed_joins:
+        left_join_rule = left_schema.get_table_allowed_joins(right_table)
+        right_join_rule = right_schema.get_table_allowed_joins(left_table)
+
+        if not left_join_rule:
             raise JoinViolationError(f"No join rules defined for table {left_table}")
-        if not right_schema or not right_schema.allowed_joins:
+        if not right_join_rule:
             raise JoinViolationError(f"No join rules defined for table {right_table}")
 
         # For FULL JOIN, check both directions
         if join_type == JoinType.FULL:
-            left_join_rule = left_schema.allowed_joins.get(right_table)
-            right_join_rule = right_schema.allowed_joins.get(left_table)
-
             if not left_join_rule or not right_join_rule:
                 raise JoinViolationError(
                     f"FULL JOIN between {left_table} and {right_table} is not allowed"
@@ -63,25 +60,34 @@ class JoinValidator(BaseQueryValidator):
 
         # Handle RIGHT JOIN by checking if equivalent LEFT JOIN is allowed in reverse direction
         elif join_type == JoinType.RIGHT:
-            join_rule = right_schema.allowed_joins.get(left_table)
-            if not join_rule or JoinType.LEFT not in join_rule.allowed_types:
+            if not right_join_rule or JoinType.LEFT not in right_join_rule.allowed_types:
                 raise JoinViolationError(
                     f"RIGHT JOIN from {left_table} to {right_table} is not allowed as {right_table} "
                     f"does not allow LEFT JOIN with {left_table}"
                 )
 
+        elif join_type == JoinType.CROSS:
+            if not left_join_rule and not right_join_rule:
+                raise JoinViolationError(
+                    f"CROSS JOIN between {left_table} and {right_table} is not allowed"
+                )
+            if JoinType.CROSS not in (left_join_rule.allowed_types if left_join_rule else set()) and \
+               JoinType.CROSS not in (right_join_rule.allowed_types if right_join_rule else set()):
+                raise JoinViolationError(
+                    f"CROSS JOIN not allowed between {left_table} and {right_table}"
+                )
+
         # For LEFT and INNER joins, validate normally
         else:
-            join_rule = left_schema.allowed_joins.get(right_table)
-            if not join_rule:
+            if not left_join_rule:
                 raise JoinViolationError(
                     f"Join between {left_table} and {right_table} is not allowed"
                 )
 
-            if join_type not in join_rule.allowed_types:
+            if join_type not in left_join_rule.allowed_types:
                 raise JoinViolationError(
                     f"Join type {join_type} not allowed between {left_table} and {right_table}. "
-                    f"Allowed types: {join_rule.allowed_types}"
+                    f"Allowed types: {left_join_rule.allowed_types}"
                 )
 
     def _collect_table_aliases(self, parsed: exp.Expression) -> Dict[str, str]:
@@ -106,25 +112,19 @@ class JoinValidator(BaseQueryValidator):
         if isinstance(join.this, exp.Table):
             right_table = join.this.name
 
-        current = join
-        while current:
-            if isinstance(current.parent, exp.From):
-                if isinstance(current.parent.this, exp.Table):
-                    left_table = current.parent.this.name
-                break
-            elif isinstance(current.parent, exp.Join):
-                if isinstance(current.parent.this, exp.Table):
-                    left_table = current.parent.this.name
-                    break
-            current = current.parent
+        # Get the table from the Select that the Join operates on.
+        left_table = self._get_default_table(join, None)
 
         return left_table, right_table
 
     def _get_join_type(self, join: exp.Join) -> JoinType:
-        """Determines the type of join from the sqlglot Join expression."""
+        """Determines the type of join from the sqlglot Join expression.""" 
+        if join.kind == "CROSS":
+            return JoinType.CROSS
+        
         if not join.side:
             return JoinType.INNER
-
+        
         join_side = join.side.upper()
         if join_side == "RIGHT":
             return JoinType.RIGHT
@@ -132,4 +132,5 @@ class JoinValidator(BaseQueryValidator):
             return JoinType.LEFT
         elif join_side in ("FULL", "OUTER"):  # Handle both FULL and OUTER as FULL
             return JoinType.FULL
+        
         return JoinType.INNER
