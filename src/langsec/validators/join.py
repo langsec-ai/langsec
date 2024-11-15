@@ -38,11 +38,6 @@ class JoinValidator(BaseQueryValidator):
         left_join_rule = left_schema.get_table_allowed_joins(right_table)
         right_join_rule = right_schema.get_table_allowed_joins(left_table)
 
-        if not left_join_rule:
-            raise JoinViolationError(f"No join rules defined for table {left_table}")
-        if not right_join_rule:
-            raise JoinViolationError(f"No join rules defined for table {right_table}")
-
         # For FULL JOIN, check both directions
         if join_type == JoinType.FULL:
             if not left_join_rule or not right_join_rule:
@@ -51,8 +46,8 @@ class JoinValidator(BaseQueryValidator):
                 )
 
             if (
-                JoinType.FULL not in left_join_rule.allowed_types
-                or JoinType.FULL not in right_join_rule.allowed_types
+                JoinType.FULL not in left_join_rule
+                or JoinType.FULL not in right_join_rule
             ):
                 raise JoinViolationError(
                     f"FULL JOIN not allowed between {left_table} and {right_table}"
@@ -60,10 +55,7 @@ class JoinValidator(BaseQueryValidator):
 
         # Handle RIGHT JOIN by checking if equivalent LEFT JOIN is allowed in reverse direction
         elif join_type == JoinType.RIGHT:
-            if (
-                not right_join_rule
-                or JoinType.LEFT not in right_join_rule.allowed_types
-            ):
+            if not right_join_rule or JoinType.LEFT not in right_join_rule:
                 raise JoinViolationError(
                     f"RIGHT JOIN from {left_table} to {right_table} is not allowed as {right_table} "
                     f"does not allow LEFT JOIN with {left_table}"
@@ -74,11 +66,8 @@ class JoinValidator(BaseQueryValidator):
                 raise JoinViolationError(
                     f"CROSS JOIN between {left_table} and {right_table} is not allowed"
                 )
-            if JoinType.CROSS not in (
-                left_join_rule.allowed_types if left_join_rule else set()
-            ) and JoinType.CROSS not in (
-                right_join_rule.allowed_types if right_join_rule else set()
-            ):
+            if JoinType.CROSS not in (left_join_rule if left_join_rule else set()) and \
+               JoinType.CROSS not in (right_join_rule if right_join_rule else set()):
                 raise JoinViolationError(
                     f"CROSS JOIN not allowed between {left_table} and {right_table}"
                 )
@@ -90,10 +79,10 @@ class JoinValidator(BaseQueryValidator):
                     f"Join between {left_table} and {right_table} is not allowed"
                 )
 
-            if join_type not in left_join_rule.allowed_types:
+            if join_type not in left_join_rule:
                 raise JoinViolationError(
                     f"Join type {join_type} not allowed between {left_table} and {right_table}. "
-                    f"Allowed types: {left_join_rule.allowed_types}"
+                    f"Allowed types: {left_join_rule}"
                 )
 
     def _collect_table_aliases(self, parsed: exp.Expression) -> Dict[str, str]:

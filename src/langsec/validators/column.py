@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Set
 from sqlglot import exp
 from .base import BaseQueryValidator
-from ..schema.sql.enums import Access
+from ..schema.sql.enums import Access, QueryType
 from ..exceptions.errors import ColumnAccessError
 
 
@@ -37,13 +37,13 @@ class ColumnValidator(BaseQueryValidator):
         delete_node = parsed.find(exp.Delete)
         if delete_node:
             # For DELETE queries, we need both DELETE and SELECT permissions
-            operations.add("DELETE")
-            operations.add("SELECT")  # For WHERE clause evaluation
+            operations.add(QueryType.DELETE)
+            operations.add(QueryType.SELECT)  # For WHERE clause evaluation
 
         # Traverse up the tree to find all relevant operations
         while current_node:
             if isinstance(current_node, (exp.Select, exp.Subquery)):
-                operations.add("SELECT")
+                operations.add(QueryType.SELECT)
             elif isinstance(current_node, exp.Update):
                 if hasattr(current_node, "expressions"):
                     for expr in current_node.expressions:
@@ -52,9 +52,9 @@ class ColumnValidator(BaseQueryValidator):
                             and isinstance(expr.left, exp.Column)
                             and expr.left.name.lower() == column.name.lower()
                         ):
-                            operations.add("UPDATE")
+                            operations.add(QueryType.UPDATE)
                             break
-                operations.add("SELECT")
+                operations.add(QueryType.SELECT)
             elif isinstance(current_node, exp.Insert):
                 if hasattr(current_node, "expressions"):
                     for col in current_node.expressions:
@@ -62,10 +62,10 @@ class ColumnValidator(BaseQueryValidator):
                             isinstance(col, exp.Column)
                             and col.name.lower() == column.name.lower()
                         ):
-                            operations.add("INSERT")
+                            operations.add(QueryType.INSERT)
                             break
                 if current_node.find(exp.Select):
-                    operations.add("SELECT")
+                    operations.add(QueryType.SELECT)
 
             current_node = current_node.parent
 
@@ -87,7 +87,7 @@ class ColumnValidator(BaseQueryValidator):
                 if table_schema:
                     has_delete_permission = False
                     for _, col_schema in table_schema.columns.items():
-                        if "DELETE" in col_schema.allowed_operations:
+                        if QueryType.DELETE in col_schema.allowed_operations:
                             has_delete_permission = True
                             break
                     if not has_delete_permission:

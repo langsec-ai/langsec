@@ -11,18 +11,16 @@ from langsec.schema.sql.enums import (
     Access
 )
 
-from langsec.schema.sql.operations import JoinRule
-
 @pytest.fixture
 def security_schema_allow_all():
     """Provides a security schema that allows most operations."""
     default_table_schema = TableSchema(
-        default_allowed_join=JoinRule(allowed_types={
+        default_allowed_join={
             JoinType.CROSS, 
             JoinType.INNER, 
             JoinType.RIGHT, 
             JoinType.LEFT
-        })
+        }
     )
     
     default_column_schema = ColumnSchema(
@@ -113,7 +111,7 @@ def basic_schema():
                     "column_1": ColumnSchema(access=Access.READ),
                 },
                 allowed_joins={
-                    "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
+                    "orders": {JoinType.INNER, JoinType.LEFT}
                 },
                 default_allowed_join=None
             ),
@@ -127,7 +125,7 @@ def basic_schema():
                     ),
                 },
                 allowed_joins={
-                    "users": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
+                    "users": {JoinType.INNER, JoinType.LEFT}
                 },
                 default_allowed_join=None
             ),
@@ -149,8 +147,8 @@ def complex_schema():
                     "order_frequency": ColumnSchema(access=Access.READ),
                 },
                 allowed_joins={
-                    "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
-                    "products": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
+                    "orders": {JoinType.INNER, JoinType.LEFT},
+                    "products": {JoinType.INNER, JoinType.LEFT}
                 },
                 default_allowed_join=None
             ),
@@ -172,8 +170,8 @@ def complex_schema():
                     "order_count": ColumnSchema(access=Access.READ),
                 },
                 allowed_joins={
-                    "users": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
-                    "products": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
+                    "users": {JoinType.INNER, JoinType.LEFT},
+                    "products": {JoinType.INNER, JoinType.LEFT},
                 },
                 default_allowed_join=None
             ),
@@ -199,7 +197,7 @@ def complex_schema():
                     "max_product_price": ColumnSchema(access=Access.READ),
                 },
                 allowed_joins={
-                    "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
+                    "orders": {JoinType.INNER, JoinType.LEFT}
                 },
                 default_allowed_join=None
             ),
