@@ -112,7 +112,7 @@ class SecuritySchema(BaseModel):
                 "columns": {},  # Empty default columns
                 "allowed_joins": {},  # Empty default joins
                 "default_allowed_join": (
-                    {}
+                    set()
                     if column_fields.get("allowed_operations")
                     and "JOIN" in column_fields["allowed_operations"]
                     else None
