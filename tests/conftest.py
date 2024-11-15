@@ -1,30 +1,32 @@
 import pytest
 from langsec import SQLSecurityGuard
-from langsec.schema import (
+from langsec.schema.security_schema import (
     SecuritySchema,
     TableSchema,
     ColumnSchema,
 )
-from langsec.schema.sql import (
-    JoinRule,
-    QueryType,
+from langsec.schema.sql.enums import (
     JoinType, 
-    AggregationType
+    AggregationType,
+    Access
 )
 
-from langsec.schema import ColumnAccess
+from langsec.schema.sql.operations import JoinRule
 
 @pytest.fixture
 def security_schema_allow_all():
-    # Don't allow joins at all
+    """Provides a security schema that allows most operations."""
     default_table_schema = TableSchema(
-        require_where_clause=False,
-        default_allowed_join=JoinRule(allowed_types={JoinType.CROSS, JoinType.INNER, JoinType.RIGHT, JoinType.LEFT})
+        default_allowed_join=JoinRule(allowed_types={
+            JoinType.CROSS, 
+            JoinType.INNER, 
+            JoinType.RIGHT, 
+            JoinType.LEFT
+        })
     )
     
-    # Allow all reads and only SUM aggregations
     default_column_schema = ColumnSchema(
-        access=ColumnAccess.READ,
+        access=Access.READ,
         allowed_aggregations={AggregationType.SUM, AggregationType.COUNT}
     )
     
@@ -33,39 +35,21 @@ def security_schema_allow_all():
         default_column_security_schema=default_column_schema
     )
 
-
 @pytest.fixture
 def security_guard_allow_all(security_schema_allow_all):
     """Provides a security guard with default table and column security schemas."""
     return SQLSecurityGuard(security_schema_allow_all)
 
-
-@pytest.fixture
-def security_deny_only_email_column(security_schema_allow_all: SecuritySchema):
-    # This schema has allow all but also denied access to the users column
-    security_schema_allow_all.tables = {
-        "users": TableSchema(
-            columns={
-                "email": ColumnSchema(access=ColumnAccess.DENIED),
-            },
-        )
-    }
-
-    return SQLSecurityGuard(security_schema_allow_all)
-
-
 @pytest.fixture
 def security_guard_deny_AVG():
-    """Provides a security guard with default table and column security schemas."""
-    # Don't allow joins at all
+    """Provides a security guard that denies AVG aggregations."""
     default_table_schema = TableSchema(
-        require_where_clause=False,
-        allowed_joins={}
+        allowed_joins={},
+        default_allowed_join=None
     )
     
-    # Allow all reads and only SUM aggregations
     default_column_schema = ColumnSchema(
-        access=ColumnAccess.READ,
+        access=Access.READ,
         allowed_aggregations={AggregationType.SUM}
     )
     
@@ -76,19 +60,16 @@ def security_guard_deny_AVG():
     
     return SQLSecurityGuard(security_schema)
 
-
 @pytest.fixture
 def security_guard_deny_all():
-    """Provides a security guard with default table and column security schemas."""
-    # Don't allow joins at all
+    """Provides a security guard that denies most operations."""
     default_table_schema = TableSchema(
-        require_where_clause=False,
-        allowed_joins={}
+        allowed_joins={},
+        default_allowed_join=None
     )
     
-    # Allow all reads and only SUM aggregations
     default_column_schema = ColumnSchema(
-        access=ColumnAccess.DENIED,
+        access=Access.DENIED,
         allowed_aggregations=set()
     )
     
@@ -99,28 +80,25 @@ def security_guard_deny_all():
     
     return SQLSecurityGuard(security_schema)
 
-
 @pytest.fixture
 def security_guard_require_where_clause_all():
-    """Provides a security guard with default table and column security schemas."""
-
-    default_table_security_schema=TableSchema(
-        require_where_clause=True,
+    """Provides a security guard that requires WHERE clauses."""
+    default_table_schema = TableSchema(
+        allowed_joins={},
         default_allowed_join=None
     )
     
-    default_column_security_schema=ColumnSchema(
-        access=ColumnAccess.READ,
-        allowed_aggregations=set(),
+    default_column_schema = ColumnSchema(
+        access=Access.READ,
+        allowed_aggregations=set()
     )
     
     security_schema = SecuritySchema(
-        default_table_security_schema=default_table_security_schema,
-        default_column_security_schema=default_column_security_schema
+        default_table_security_schema=default_table_schema,
+        default_column_security_schema=default_column_schema
     )
     
     return SQLSecurityGuard(security_schema)
-
 
 @pytest.fixture
 def basic_schema():
@@ -129,37 +107,34 @@ def basic_schema():
         tables={
             "users": TableSchema(
                 columns={
-                    "id": ColumnSchema(access=ColumnAccess.READ),
-                    "username": ColumnSchema(access=ColumnAccess.READ),
-                    "email": ColumnSchema(access=ColumnAccess.DENIED),
-                    "created_at": ColumnSchema(access=ColumnAccess.READ),
-                    "column_1": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for length test
+                    "id": ColumnSchema(access=Access.READ),
+                    "username": ColumnSchema(access=Access.READ),
+                    "created_at": ColumnSchema(access=Access.READ),
+                    "column_1": ColumnSchema(access=Access.READ),
                 },
-                require_where_clause=True,
                 allowed_joins={
                     "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
                 },
+                default_allowed_join=None
             ),
             "orders": TableSchema(
                 columns={
-                    "id": ColumnSchema(access=ColumnAccess.READ),
-                    "user_id": ColumnSchema(access=ColumnAccess.READ),
+                    "id": ColumnSchema(access=Access.READ),
+                    "user_id": ColumnSchema(access=Access.READ),
                     "amount": ColumnSchema(
-                        access=ColumnAccess.READ,
+                        access=Access.READ,
                         allowed_aggregations={AggregationType.SUM, AggregationType.AVG},
                     ),
                 },
                 allowed_joins={
                     "users": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
                 },
+                default_allowed_join=None
             ),
         },
         max_joins=2,
         max_query_length=500,
     )
-
 
 @pytest.fixture
 def complex_schema():
@@ -168,25 +143,23 @@ def complex_schema():
         tables={
             "users": TableSchema(
                 columns={
-                    "id": ColumnSchema(access=ColumnAccess.READ),
-                    "username": ColumnSchema(access=ColumnAccess.READ),
-                    "email": ColumnSchema(access=ColumnAccess.DENIED),
-                    "created_at": ColumnSchema(access=ColumnAccess.READ),
-                    # Add case statement columns
-                    "order_frequency": ColumnSchema(access=ColumnAccess.READ),
+                    "id": ColumnSchema(access=Access.READ),
+                    "username": ColumnSchema(access=Access.READ),
+                    "created_at": ColumnSchema(access=Access.READ),
+                    "order_frequency": ColumnSchema(access=Access.READ),
                 },
-                require_where_clause=True,
                 allowed_joins={
                     "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
                     "products": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
                 },
+                default_allowed_join=None
             ),
             "orders": TableSchema(
                 columns={
-                    "id": ColumnSchema(access=ColumnAccess.READ),
-                    "user_id": ColumnSchema(access=ColumnAccess.READ),
+                    "id": ColumnSchema(access=Access.READ),
+                    "user_id": ColumnSchema(access=Access.READ),
                     "amount": ColumnSchema(
-                        access=ColumnAccess.READ,
+                        access=Access.READ,
                         allowed_aggregations={
                             AggregationType.MAX,
                             AggregationType.SUM,
@@ -194,25 +167,22 @@ def complex_schema():
                             AggregationType.COUNT,
                         },
                     ),
-                    "product_id": ColumnSchema(access=ColumnAccess.READ),
-                    "total_spent": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for alias test
-                    "order_count": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for subquery
+                    "product_id": ColumnSchema(access=Access.READ),
+                    "total_spent": ColumnSchema(access=Access.READ),
+                    "order_count": ColumnSchema(access=Access.READ),
                 },
                 allowed_joins={
                     "users": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
                     "products": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT}),
                 },
+                default_allowed_join=None
             ),
             "products": TableSchema(
                 columns={
-                    "id": ColumnSchema(access=ColumnAccess.READ),
-                    "name": ColumnSchema(access=ColumnAccess.READ),
+                    "id": ColumnSchema(access=Access.READ),
+                    "name": ColumnSchema(access=Access.READ),
                     "price": ColumnSchema(
-                        access=ColumnAccess.READ,
+                        access=Access.READ,
                         allowed_aggregations={
                             AggregationType.AVG,
                             AggregationType.MIN,
@@ -220,32 +190,22 @@ def complex_schema():
                         },
                     ),
                     "category": ColumnSchema(
-                        access=ColumnAccess.READ,
+                        access=Access.READ,
                         allowed_aggregations={AggregationType.COUNT},
                     ),
-                    "product_count": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for aggregation
-                    "avg_price": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for aggregation
-                    "total_sales": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for aggregation
-                    "max_product_price": ColumnSchema(
-                        access=ColumnAccess.READ
-                    ),  # Added for complex joins test
+                    "product_count": ColumnSchema(access=Access.READ),
+                    "avg_price": ColumnSchema(access=Access.READ),
+                    "total_sales": ColumnSchema(access=Access.READ),
+                    "max_product_price": ColumnSchema(access=Access.READ),
                 },
                 allowed_joins={
                     "orders": JoinRule(allowed_types={JoinType.INNER, JoinType.LEFT})
                 },
-                allow_group_by=True,
-                allowed_group_by_columns={"category"},
+                default_allowed_join=None
             ),
         },
         max_joins=3,
         allow_subqueries=True,
-        allow_unions=False,
         max_query_length=500,
         forbidden_keywords={
             "DROP",
@@ -259,18 +219,15 @@ def complex_schema():
         },
     )
 
-
 @pytest.fixture
 def security_guard(basic_schema):
     """Provides a configured SQLSecurityGuard instance."""
     return SQLSecurityGuard(schema=basic_schema)
 
-
 @pytest.fixture
 def complex_security_guard(complex_schema):
     """Provides a SQLSecurityGuard instance with complex configuration."""
     return SQLSecurityGuard(schema=complex_schema)
-
 
 @pytest.fixture
 def security_guard_no_subqueries(basic_schema):
@@ -278,9 +235,16 @@ def security_guard_no_subqueries(basic_schema):
     basic_schema.allow_subqueries = False
     return SQLSecurityGuard(schema=basic_schema)
 
-
 @pytest.fixture
-def security_guard_multiple_types(basic_schema):
-    """Create a security guard that allows multiple query types."""
-    basic_schema.allowed_query_types = {QueryType.SELECT, QueryType.INSERT}
-    return SQLSecurityGuard(schema=basic_schema)
+def security_deny_only_email_column(security_schema_allow_all: SecuritySchema):
+    """Creates a security guard that denies access only to the email column."""
+    security_schema_allow_all.tables = {
+        "users": TableSchema(
+            columns={
+                "email": ColumnSchema(access=Access.DENIED),
+            },
+            default_allowed_join=None
+        )
+    }
+
+    return SQLSecurityGuard(security_schema_allow_all)

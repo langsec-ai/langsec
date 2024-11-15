@@ -17,12 +17,7 @@ class JoinType(str, Enum):
     CROSS = "cross"
 
 
-class QueryType(str, Enum):
-    SELECT = "SELECT"
-    INSERT = "INSERT"
-    UPDATE = "UPDATE"
-    DELETE = "DELETE"
-    CREATE = "CREATE"
-    DROP = "DROP"
-    ALTER = "ALTER"
-    TRUNCATE = "TRUNCATE"
+class Access(str, Enum):
+    READ = "read"
+    WRITE = "write"
+    DENIED = "denied"
