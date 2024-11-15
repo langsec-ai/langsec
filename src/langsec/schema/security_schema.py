@@ -1,7 +1,6 @@
 from typing import Dict, Optional, Set, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from .sql.operations import JoinRule
 from .sql.enums import AggregationType, Access, JoinType, QueryType
 
 
@@ -30,13 +29,13 @@ class TableSchema(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
-    def get_table_allowed_joins(self, column: str) -> JoinRule:
+    def get_table_allowed_joins(self, column: str) -> Set[JoinType]:
         """Get join rules for a column, returning default JoinRule if none specified."""
-        return self.allowed_joins.get(column, self.default_allowed_join or JoinRule())
+        return self.allowed_joins.get(column, self.default_allowed_join or {})
 
     @field_validator("allowed_joins", mode="before")
     @classmethod
-    def ensure_join_rules(cls, v: Optional[Dict]) -> Dict[str, JoinRule]:
+    def ensure_join_rules(cls, v: Optional[Dict]) -> Dict[str, Set[JoinType]]:
         """Ensures join rules are properly instantiated."""
         if not isinstance(v, dict):
             return {}
@@ -49,14 +48,14 @@ class TableSchema(BaseModel):
     @field_validator("default_allowed_join", mode="before")
     @classmethod
     def ensure_default_join_rule(
-        cls, v: Optional[Union[Dict, JoinRule]]
-    ) -> Optional[JoinRule]:
+        cls, v: Optional[Union[Dict, Set[JoinType]]]
+    ) -> Optional[Set[JoinType]]:
         """Ensures default join rule is properly instantiated."""
         if v is None:
             return None
-        if isinstance(v, JoinRule):
+        if isinstance(v, set):
             return v
-        return JoinRule(**(v or {}))
+        return (v or {})
 
     @classmethod
     def create_default(cls, **kwargs) -> "TableSchema":
@@ -131,7 +130,7 @@ class SecuritySchema(BaseModel):
                 "columns": {},  # Empty default columns
                 "allowed_joins": {},  # Empty default joins
                 "default_allowed_join": (
-                    JoinRule()
+                    {}
                     if column_fields.get("allowed_operations")
                     and "JOIN" in column_fields["allowed_operations"]
                     else None

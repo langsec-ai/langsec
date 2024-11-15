@@ -9,8 +9,8 @@ from langsec.schema.sql import (
     QueryType,
     JoinType, 
     AggregationType,
-    Access
 )
+from langsec.schema import Access
 
 @pytest.fixture
 def security_schema_allow_all():
