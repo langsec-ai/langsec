@@ -53,6 +53,11 @@ class TableSchema(BaseModel):
         return v
 
 
+def instantiate_class_with_kwargs(cls, kwargs):
+        class_args = {key: kwargs.get(key) for key in cls.__annotations__.keys() if kwargs.get(key) is not None}
+        return cls(**class_args) if class_args else None
+
+
 class SecuritySchema(BaseModel):
     tables: Dict[str, TableSchema] = Field(default_factory=dict)
     max_joins: int = 3
@@ -85,6 +90,16 @@ class SecuritySchema(BaseModel):
     default_column_security_schema: Optional[ColumnSchema] = None
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize default_column_security_schema only if needed.
+        # Only if any of the kwargs are needed.
+        if self.default_column_security_schema is None:
+            self.default_column_security_schema = instantiate_class_with_kwargs(ColumnSchema, kwargs)
+            
+        if self.default_table_security_schema is None:
+            self.default_table_security_schema = instantiate_class_with_kwargs(TableSchema, kwargs)
 
     def get_prompt(self) -> str:
         prompt = "Generate an SQL query adhering to the following constraints:\n"
