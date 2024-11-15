@@ -1,16 +1,17 @@
 import pytest
 from langsec import SQLSecurityGuard
-from langsec.schema import (
+from langsec.schema.security_schema import (
     SecuritySchema,
     TableSchema,
     ColumnSchema,
 )
-from langsec.schema.sql import (
-    JoinRule,
+from langsec.schema.sql.enums import (
     JoinType, 
-    AggregationType
+    AggregationType,
+    Access
 )
-from langsec.schema import Access
+
+from langsec.schema.sql.operations import JoinRule
 
 @pytest.fixture
 def security_schema_allow_all():
