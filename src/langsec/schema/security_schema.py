@@ -9,7 +9,7 @@ class ColumnSchema(BaseModel):
     """Schema defining security rules for a database column."""
 
     access: Access = Field(default=Access.DENIED)
-    allowed_operations: Set[str] = Field(default_factory=set)
+    allowed_operations: Set[str] = Field(default_factory=lambda: {"SELECT"})
     allowed_aggregations: Set[AggregationType] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
