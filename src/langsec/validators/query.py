@@ -1,5 +1,6 @@
 from typing import Optional
 from sqlglot import parse_one
+
 from ..schema.security_schema import SecuritySchema
 from ..config import LangSecConfig
 from ..exceptions.errors import (
@@ -24,8 +25,8 @@ class QueryValidator:
 
         # Initialize all validators
         self.table_validator = TableValidator(schema)
-        self.join_validator = JoinValidator(schema)
         self.column_validator = ColumnValidator(schema)
+        self.join_validator = JoinValidator(schema)
         self.aggregation_validator = AggregationValidator(schema)
         self.subqueries_validator = SubqueryValidator(schema)
 

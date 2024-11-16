@@ -1,14 +1,14 @@
 from typing import Dict, Optional, Set, Union
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from .sql.enums import AggregationType, Access, JoinType
+from .sql.enums import AggregationType, Access, JoinType, Operation
 
 
 class ColumnSchema(BaseModel):
     """Schema defining security rules for a database column."""
 
     access: Access = Field(default=Access.DENIED)
-    allowed_operations: Set[str] = Field(default_factory=lambda: {"SELECT"})
+    allowed_operations: Set[Operation] = Field(default_factory=lambda: {Operation.SELECT})
     allowed_aggregations: Set[AggregationType] = Field(default_factory=set)
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
@@ -74,6 +74,9 @@ class SecuritySchema(BaseModel):
         default_factory=lambda: {
             "TRUNCATE",
             "DROP",
+            "DELETE",
+            "UPDATE",
+            "1=1",
             "ALTER",
             "GRANT",
             "REVOKE",
@@ -84,7 +87,6 @@ class SecuritySchema(BaseModel):
         }
     )
     access: Optional[Access] = Field(default=None)
-    allowed_operations: Optional[Set[str]] = Field(default=None)
     allowed_aggregations: Optional[Set[AggregationType]] = Field(default=None)
 
     # Default schemas with proper typing
@@ -112,10 +114,11 @@ class SecuritySchema(BaseModel):
                 "columns": {},  # Empty default columns
                 "allowed_joins": {},  # Empty default joins
                 "default_allowed_join": (
-                    set()
+                    # Set default allowed joins only if JOIN is an allowed operation
+                    set({JoinType.INNER, JoinType.LEFT})
                     if column_fields.get("allowed_operations")
                     and "JOIN" in column_fields["allowed_operations"]
-                    else None
+                    else set()
                 ),
             }
             data["default_table_security_schema"] = TableSchema(**table_fields)
@@ -135,10 +138,11 @@ class SecuritySchema(BaseModel):
         prompt += (
             f"- Forbidden keywords: {', '.join(sorted(self.forbidden_keywords))}\n"
         )
-        if self.allowed_operations:
-            prompt += (
-                f"- Allowed operations: {', '.join(sorted(self.allowed_operations))}\n"
-            )
+        # TODO: Get this from the default column settings
+        # if self.allowed_operations:
+        #     prompt += (
+        #         f"- Allowed operations: {', '.join(sorted(self.allowed_operations))}\n"
+        #     )
         if self.allowed_aggregations:
             prompt += f"- Allowed aggregations: {', '.join(sorted(agg.name for agg in self.allowed_aggregations))}\n"
         if self.access:

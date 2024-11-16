@@ -8,5 +8,4 @@ __all__ = [
     "SecuritySchema",
     "LangSecConfig",
     "LangSecError",
-    "sql_security_schema",
 ]
