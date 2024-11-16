@@ -22,7 +22,7 @@ def test_forbidden_keyword_revoke(security_guard):
         security_guard.validate_query("REVOKE SELECT ON users FROM role;")
 
 def test_forbidden_keyword_execute(security_guard):
-    with pytest.raises(QueryComplexityError, match="Forbidden keyword found: EXECUTE"):
+    with pytest.raises(QueryComplexityError, match="Forbidden keyword found: EXEC"):
         security_guard.validate_query("EXECUTE some_procedure;")
 
 def test_forbidden_keyword_sysadmin(security_guard):

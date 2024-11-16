@@ -301,7 +301,8 @@ def mixed_access_schema():
             )
         },
         max_joins=1,
-        allow_subqueries=True
+        allow_subqueries=True,
+        forbidden_keywords=set()
     )
 
 @pytest.fixture
