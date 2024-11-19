@@ -146,6 +146,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+langsec-venv/
 
 # Spyder project settings
 .spyderproject
@@ -234,5 +235,3 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,windows,linux,python
-
-langsec-venv/
