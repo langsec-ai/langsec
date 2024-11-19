@@ -41,17 +41,10 @@ class JoinValidator(BaseQueryValidator):
         # For FULL JOIN, check both directions
         if join_type == JoinType.FULL:
             if not left_join_rule or not right_join_rule:
-                raise JoinViolationError(
-                    f"FULL JOIN between {left_table} and {right_table} is not allowed"
-                )
+                raise JoinViolationError(f"FULL JOIN between {left_table} and {right_table} is not allowed")
 
-            if (
-                JoinType.FULL not in left_join_rule
-                or JoinType.FULL not in right_join_rule
-            ):
-                raise JoinViolationError(
-                    f"FULL JOIN not allowed between {left_table} and {right_table}"
-                )
+            if JoinType.FULL not in left_join_rule or JoinType.FULL not in right_join_rule:
+                raise JoinViolationError(f"FULL JOIN not allowed between {left_table} and {right_table}")
 
         # Handle RIGHT JOIN by checking if equivalent LEFT JOIN is allowed in reverse direction
         elif join_type == JoinType.RIGHT:
@@ -63,22 +56,16 @@ class JoinValidator(BaseQueryValidator):
 
         elif join_type == JoinType.CROSS:
             if not left_join_rule and not right_join_rule:
-                raise JoinViolationError(
-                    f"CROSS JOIN between {left_table} and {right_table} is not allowed"
-                )
-            if JoinType.CROSS not in (
-                left_join_rule if left_join_rule else set()
-            ) and JoinType.CROSS not in (right_join_rule if right_join_rule else set()):
-                raise JoinViolationError(
-                    f"CROSS JOIN not allowed between {left_table} and {right_table}"
-                )
+                raise JoinViolationError(f"CROSS JOIN between {left_table} and {right_table} is not allowed")
+            if JoinType.CROSS not in (left_join_rule if left_join_rule else set()) and JoinType.CROSS not in (
+                right_join_rule if right_join_rule else set()
+            ):
+                raise JoinViolationError(f"CROSS JOIN not allowed between {left_table} and {right_table}")
 
         # For LEFT and INNER joins, validate normally
         else:
             if not left_join_rule:
-                raise JoinViolationError(
-                    f"Join between {left_table} and {right_table} is not allowed"
-                )
+                raise JoinViolationError(f"Join between {left_table} and {right_table} is not allowed")
 
             if join_type not in left_join_rule:
                 raise JoinViolationError(

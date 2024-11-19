@@ -6,7 +6,8 @@ from ..security_schema import SecuritySchema
 
 
 def _parse_sql_ddl(
-    schema: SecuritySchema, connection: sqlite3.Connection
+    schema: SecuritySchema,
+    connection: sqlite3.Connection,
 ) -> SecuritySchema:
     from ..security_schema import ColumnSchema, TableSchema
 
@@ -31,7 +32,8 @@ def _parse_sql_ddl(
 
 
 def sql_security_schema(
-    config: LangSecConfig, connection: sqlite3.Connection
+    config: LangSecConfig,
+    connection: sqlite3.Connection,
 ) -> SecuritySchema:
     schema = SecuritySchema()
     _parse_sql_ddl(schema, connection)

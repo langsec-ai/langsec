@@ -17,9 +17,7 @@ class SQLInjectionValidator(BaseQueryValidator):
             # UNION-based attacks
             re.compile(r"UNION\s+(?:ALL\s+)?SELECT", re.IGNORECASE),
             # Command execution
-            re.compile(
-                r"(?:EXEC(?:UTE)?|xp_cmdshell|sp_executesql)\s*[\(\s]", re.IGNORECASE
-            ),
+            re.compile(r"(?:EXEC(?:UTE)?|xp_cmdshell|sp_executesql)\s*[\(\s]", re.IGNORECASE),
             # Boolean-based injection patterns
             re.compile(r"\bOR\s+[\'\"0-9]\s*=\s*[\'\"0-9]", re.IGNORECASE),
             re.compile(r"\bAND\s+[\'\"0-9]\s*=\s*[\'\"0-9]", re.IGNORECASE),
@@ -55,9 +53,7 @@ class SQLInjectionValidator(BaseQueryValidator):
     def _check_suspicious_tokens(self, query: str) -> bool:
         """Check for suspicious token combinations that might indicate SQL injection."""
         normalized_query = query.lower()
-        return any(
-            token.lower() in normalized_query for token in self.suspicious_tokens
-        )
+        return any(token.lower() in normalized_query for token in self.suspicious_tokens)
 
     def _check_quote_balance(self, query: str) -> bool:
         """Check if quotes are properly balanced in the query."""
@@ -76,36 +72,25 @@ class SQLInjectionValidator(BaseQueryValidator):
         for pattern in self.patterns:
             match = pattern.search(expr_str)
             if match:
-                raise SQLInjectionError(
-                    f"Potential SQL injection detected - matches pattern: {pattern.pattern}"
-                )
+                raise SQLInjectionError(f"Potential SQL injection detected - matches pattern: {pattern.pattern}")
 
         # Check for suspicious tokens
         if self._check_suspicious_tokens(expr_str):
-            raise SQLInjectionError(
-                "Potential SQL injection detected - contains suspicious token combination"
-            )
+            raise SQLInjectionError("Potential SQL injection detected - contains suspicious token combination")
 
         # Special checks for different expression types
         if isinstance(expr, exp.Literal) and isinstance(expr.this, str):
             # Check string literals more thoroughly
             if not self._check_quote_balance(expr.this):
-                raise SQLInjectionError(
-                    "Potential SQL injection detected - unbalanced quotes in string literal"
-                )
+                raise SQLInjectionError("Potential SQL injection detected - unbalanced quotes in string literal")
 
         elif isinstance(expr, exp.Select):
             # Additional checks specific to SELECT statements
             if any(isinstance(e, exp.Union) for e in expr.find_all(exp.Union)):
                 # Verify UNION usage
                 union_expr = next(expr.find_all(exp.Union))
-                if not (
-                    isinstance(union_expr.left, exp.Select)
-                    and isinstance(union_expr.right, exp.Select)
-                ):
-                    raise SQLInjectionError(
-                        "Potential SQL injection detected - suspicious UNION usage"
-                    )
+                if not (isinstance(union_expr.left, exp.Select) and isinstance(union_expr.right, exp.Select)):
+                    raise SQLInjectionError("Potential SQL injection detected - suspicious UNION usage")
 
         # Recursively check all child expressions
         for child in expr.expressions:

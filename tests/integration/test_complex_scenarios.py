@@ -82,9 +82,7 @@ class TestEdgeCases:
 class TestErrorScenarios:
     def test_exceed_query_length(self, complex_security_guard):
         """Test query length limit."""
-        long_query = "SELECT * FROM users WHERE " + " AND ".join(
-            [f"column_{i} = {i}" for i in range(1000)]
-        )
+        long_query = "SELECT * FROM users WHERE " + " AND ".join([f"column_{i} = {i}" for i in range(1000)])
         with pytest.raises(QueryComplexityError):
             complex_security_guard.validate_query(long_query)
 

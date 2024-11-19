@@ -6,9 +6,7 @@ from ..exceptions.errors import ColumnAccessError
 
 
 class ColumnValidator(BaseQueryValidator):
-    def _resolve_table_name(
-        self, parsed: exp.Expression, table_alias: str
-    ) -> Optional[str]:
+    def _resolve_table_name(self, parsed: exp.Expression, table_alias: str) -> Optional[str]:
         """Resolve table alias to actual table name."""
         for table in parsed.find_all(exp.Table):
             if table.alias and table.alias.lower() == table_alias.lower():
@@ -23,9 +21,7 @@ class ColumnValidator(BaseQueryValidator):
                 aliases[table.alias.lower()] = table.name.lower()
         return aliases
 
-    def _get_column_operations(
-        self, column: exp.Column, parsed: exp.Expression
-    ) -> Set[str]:
+    def _get_column_operations(self, column: exp.Column, parsed: exp.Expression) -> Set[Operation]:
         """
         Determine all operations being performed on a column, including in nested queries.
         Returns a set of operations (SELECT, UPDATE, INSERT, DELETE).
@@ -58,10 +54,7 @@ class ColumnValidator(BaseQueryValidator):
             elif isinstance(current_node, exp.Insert):
                 if hasattr(current_node, "expressions"):
                     for col in current_node.expressions:
-                        if (
-                            isinstance(col, exp.Column)
-                            and col.name.lower() == column.name.lower()
-                        ):
+                        if isinstance(col, exp.Column) and col.name.lower() == column.name.lower():
                             operations.add(Operation.INSERT)
                             break
                 if current_node.find(exp.Select):
@@ -91,9 +84,7 @@ class ColumnValidator(BaseQueryValidator):
                             has_delete_permission = True
                             break
                     if not has_delete_permission:
-                        raise ColumnAccessError(
-                            f"DELETE operation not allowed on table '{table_name}'"
-                        )
+                        raise ColumnAccessError(f"DELETE operation not allowed on table '{table_name}'")
 
         for column in parsed.find_all(exp.Column):
             table_name = None
@@ -110,9 +101,7 @@ class ColumnValidator(BaseQueryValidator):
 
             # Check if column exists and has access
             if column_rule.access == Access.DENIED:
-                raise ColumnAccessError(
-                    f"Access denied for column '{column_name}' in table '{table_name}'"
-                )
+                raise ColumnAccessError(f"Access denied for column '{column_name}' in table '{table_name}'")
 
             # Get all operations being performed on this column
             column_operations = self._get_column_operations(column, parsed)
@@ -133,15 +122,11 @@ class ColumnValidator(BaseQueryValidator):
                     f"Column only has read access."
                 )
 
-    def _get_write_columns(
-        self, parsed: exp.Expression, aliases: Dict[str, str]
-    ) -> Set[str]:
+    def _get_write_columns(self, parsed: exp.Expression, aliases: Dict[str, str]) -> Set[str]:
         """Get set of columns that are being written to."""
         write_columns = set()
 
-        def add_write_column(
-            column: exp.Column, table_context: Optional[str] = None
-        ) -> None:
+        def add_write_column(column: exp.Column, table_context: Optional[str] = None) -> None:
             """Helper to add column to write set."""
             table_name = None
             if column.table:
@@ -157,9 +142,7 @@ class ColumnValidator(BaseQueryValidator):
 
         # Handle UPDATE SET clause
         for update in parsed.find_all(exp.Update):
-            table_context = (
-                update.this.name if isinstance(update.this, exp.Table) else None
-            )
+            table_context = update.this.name if isinstance(update.this, exp.Table) else None
             if hasattr(update, "expressions"):
                 for expr in update.expressions:
                     if isinstance(expr, exp.EQ) and isinstance(expr.left, exp.Column):
@@ -167,9 +150,7 @@ class ColumnValidator(BaseQueryValidator):
 
         # Handle INSERT columns
         for insert in parsed.find_all(exp.Insert):
-            table_context = (
-                insert.this.name if isinstance(insert.this, exp.Table) else None
-            )
+            table_context = insert.this.name if isinstance(insert.this, exp.Table) else None
             if hasattr(insert, "expressions"):
                 for col in insert.expressions:
                     if isinstance(col, exp.Column):
@@ -177,15 +158,10 @@ class ColumnValidator(BaseQueryValidator):
 
         # Handle DELETE - gets all columns from the target table used in the query
         for delete in parsed.find_all(exp.Delete):
-            table_context = (
-                delete.this.name if isinstance(delete.this, exp.Table) else None
-            )
+            table_context = delete.this.name if isinstance(delete.this, exp.Table) else None
             if table_context:
                 for column in delete.find_all(exp.Column):
-                    if (
-                        not column.table
-                        or column.table.lower() == table_context.lower()
-                    ):
+                    if not column.table or column.table.lower() == table_context.lower():
                         add_write_column(column, table_context)
 
         return write_columns
