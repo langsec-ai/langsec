@@ -50,4 +50,4 @@ jobs:
       - name: Run tests
         timeout-minutes: 10
         run: |
-          pytest -v tests/
+          poetry run pytest -v tests/
