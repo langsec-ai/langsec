@@ -19,12 +19,6 @@ class TestBasicQueries:
         with pytest.raises(ColumnAccessError):
             security_guard.validate_query(query)
 
-    # def test_missing_where_clause(self, security_guard):
-    #     """Test that missing WHERE clause is caught."""
-    #     query = "SELECT id, username FROM users"
-    #     with pytest.raises(QueryComplexityError):
-    #         security_guard.validate_query(query)
-
     def test_invalid_table(self, security_guard):
         """Test that invalid tables are caught."""
         query = "SELECT * FROM nonexistent_table"
@@ -112,7 +106,7 @@ class TestJoins:
             RIGHT JOIN orders ON users.id = orders.user_id
             WHERE users.created_at > '2024-01-01'
         """
-        security_guard.validate_query(query) # Should not raise
+        security_guard.validate_query(query)  # Should not raise
 
     def test_invalid_cross_join(self, security_guard):
         """Test that CROSS JOIN is not allowed."""
@@ -329,7 +323,7 @@ class TestQueryTypes:
     #         security_guard.validate_query(query)
     #     assert "Query type 'UPDATE' is not allowed" in str(exc.value)
 
-     # TODO: Once we enforce operation types, uncomment these tests.
+    # TODO: Once we enforce operation types, uncomment these tests.
     # def test_multiple_allowed_types(self, basic_schema):
     #     """Test that multiple query types can be allowed."""
     #     # Modify schema to allow multiple query types and disable WHERE clause requirement
@@ -346,10 +340,11 @@ class TestQueryTypes:
     #     insert_query = "INSERT INTO users (username) VALUES ('test')"
     #     assert guard.validate_query(insert_query)
 
+
 class TestColumnAccessWithMixedAccess:
     def test_mixed_access_permissions(self, mixed_access_guard):
         """Test various access permissions scenarios."""
-        
+
         # Should succeed: Reading from both READ and WRITE columns
         mixed_access_guard.validate_query("""
             SELECT id, username, email 
@@ -380,7 +375,7 @@ class TestColumnAccessWithMixedAccess:
 
     def test_mixed_access_complex_queries(self, mixed_access_guard):
         """Test complex queries with mixed access permissions."""
-        
+
         # Should succeed: Complex query using only READ operations
         mixed_access_guard.validate_query("""
             SELECT u.id, u.username, u.email
@@ -403,7 +398,7 @@ class TestColumnAccessWithMixedAccess:
 
     def test_delete_permissions(self, mixed_access_guard):
         """Test delete permissions with mixed access."""
-        
+
         # Should fail: DELETE not allowed on users table
         with pytest.raises(ColumnAccessError):
             mixed_access_guard.validate_query("""
