@@ -1,5 +1,5 @@
 import pytest
-from langsec.exceptions.errors import SQLInjectionError, SQLSyntaxError, QueryComplexityError, TableAccessError
+from langsec.exceptions.errors import SQLInjectionError, QueryComplexityError, TableAccessError
 
 
 class TestSQLInjection:

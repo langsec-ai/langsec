@@ -55,8 +55,7 @@ class QueryValidator:
     def _validate_query_length(self, query: str) -> None:
         if self.schema.max_query_length and len(query) > self.schema.max_query_length:
             raise QueryComplexityError(
-                f"Query length exceeds maximum allowed "
-                f"({len(query)} > {self.schema.max_query_length})"
+                f"Query length exceeds maximum allowed " f"({len(query)} > {self.schema.max_query_length})"
             )
 
     def _validate_forbidden_keywords(self, query: str) -> None:

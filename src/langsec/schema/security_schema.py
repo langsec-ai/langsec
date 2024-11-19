@@ -45,7 +45,8 @@ class TableSchema(BaseModel):
     @field_validator("default_allowed_join", mode="before")
     @classmethod
     def ensure_default_join_rule(
-        cls, v: Optional[Union[Dict, Set[JoinType]]]
+        cls,
+        v: Optional[Union[Dict, Set[JoinType]]],
     ) -> Optional[Set[JoinType]]:
         """Ensures default join rule is properly instantiated."""
         if v is None:
@@ -116,8 +117,7 @@ class SecuritySchema(BaseModel):
                 "default_allowed_join": (
                     # Set default allowed joins only if JOIN is an allowed operation
                     set({JoinType.INNER, JoinType.LEFT})
-                    if column_fields.get("allowed_operations")
-                    and "JOIN" in column_fields["allowed_operations"]
+                    if column_fields.get("allowed_operations") and "JOIN" in column_fields["allowed_operations"]
                     else set()
                 ),
             }
@@ -130,14 +130,10 @@ class SecuritySchema(BaseModel):
         prompt = "Generate an SQL query adhering to the following constraints:\n"
         prompt += f"- Maximum joins allowed: {self.max_joins}\n"
         prompt += f"- Subqueries allowed: {'Yes' if self.allow_subqueries else 'No'}\n"
-        prompt += (
-            f"- Temporary tables allowed: {'Yes' if self.allow_temp_tables else 'No'}\n"
-        )
+        prompt += f"- Temporary tables allowed: {'Yes' if self.allow_temp_tables else 'No'}\n"
         prompt += f"- Maximum query length: {self.max_query_length if self.max_query_length else 'Unlimited'}\n"
         prompt += f"- SQL Injection Protection: {'Enabled' if self.sql_injection_protection else 'Disabled'}\n"
-        prompt += (
-            f"- Forbidden keywords: {', '.join(sorted(self.forbidden_keywords))}\n"
-        )
+        prompt += f"- Forbidden keywords: {', '.join(sorted(self.forbidden_keywords))}\n"
         # TODO: Get this from the default column settings
         # if self.allowed_operations:
         #     prompt += (
@@ -156,9 +152,7 @@ class SecuritySchema(BaseModel):
     def get_column_schema(self, table_name: str, column_name: str) -> ColumnSchema:
         """Returns the column schema, or the default if not found."""
         table_schema = self.get_table_schema(table_name)
-        return table_schema.columns.get(
-            column_name, self.default_column_security_schema
-        )
+        return table_schema.columns.get(column_name, self.default_column_security_schema)
 
     @field_validator("tables", mode="before")
     @classmethod
@@ -167,7 +161,4 @@ class SecuritySchema(BaseModel):
         if not isinstance(v, dict):
             return {}
 
-        return {
-            k: v[k] if isinstance(v[k], TableSchema) else TableSchema(**(v[k] or {}))
-            for k in v
-        }
+        return {k: v[k] if isinstance(v[k], TableSchema) else TableSchema(**(v[k] or {})) for k in v}

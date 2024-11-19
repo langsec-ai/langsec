@@ -12,9 +12,7 @@ class BaseQueryValidator(ABC):
     def validate(self, parsed: exp.Expression) -> None:
         """Validates the given SQL query."""
 
-    def _get_default_table(
-        self, parsed: exp.Expression, column_hint: Union[exp.Column, None]
-    ) -> Optional[str]:
+    def _get_default_table(self, parsed: exp.Expression, column_hint: Union[exp.Column, None]) -> Optional[str]:
         """Gets the default table when column table is not specified."""
         # Sometimes we can get the table name straight from the expression
         if parsed.parent_select is not None:

@@ -19,9 +19,7 @@ class AggregationValidator(BaseQueryValidator):
                 if column_rule and column_rule.allowed_aggregations:
                     agg_type = self._get_aggregation_type(agg)
                     if agg_type not in column_rule.allowed_aggregations:
-                        raise QueryComplexityError(
-                            f"Aggregation {agg_type} not allowed for column {column.name}"
-                        )
+                        raise QueryComplexityError(f"Aggregation {agg_type} not allowed for column {column.name}")
 
     def _get_aggregation_type(self, agg: exp.Expression) -> AggregationType:
         """Maps sqlglot aggregation to AggregationType."""

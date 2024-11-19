@@ -26,6 +26,4 @@ class SubqueryValidator(BaseQueryValidator):
             ]
 
             if subqueries:
-                raise QueryComplexityError(
-                    "Subqueries are not allowed in the current security configuration"
-                )
+                raise QueryComplexityError("Subqueries are not allowed in the current security configuration")
