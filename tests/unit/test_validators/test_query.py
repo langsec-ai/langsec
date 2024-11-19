@@ -5,7 +5,6 @@ from langsec.exceptions.errors import (
     JoinViolationError,
     QueryComplexityError,
 )
-from langsec.core.security import SQLSecurityGuard
 
 
 class TestBasicQueries:

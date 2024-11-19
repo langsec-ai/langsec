@@ -1,12 +1,9 @@
 import pytest
 from langsec.exceptions.errors import (
-    AllowedJoinNotDefinedViolationError,
-    TableAccessError,
     ColumnAccessError,
     JoinViolationError,
     QueryComplexityError,
 )
-from langsec.core.security import SQLSecurityGuard
 
 
 class TestBasicQueriesWithDefaultContext:
