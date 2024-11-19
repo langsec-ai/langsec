@@ -1,4 +1,4 @@
-name: Python package
+name: Run tests
 
 # Separate triggers to apply different permissions
 on:
