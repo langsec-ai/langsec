@@ -3,13 +3,6 @@ name: Python package
 # Separate triggers to apply different permissions
 on:
   push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
 
 jobs:
   build:
